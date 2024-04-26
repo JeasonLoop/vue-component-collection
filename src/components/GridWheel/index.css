@@ -1,0 +1,30 @@
+.grid_container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  /* grid-template-rows: 100px 100px 100px; */
+}
+
+.grid_item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height:100px;
+  outline: 1px solid #333;
+}
+
+.draw_btn {
+  
+}
+
+.grid_body{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 100px;
+}
+
+.active {
+  border: 3px solid red
+}
