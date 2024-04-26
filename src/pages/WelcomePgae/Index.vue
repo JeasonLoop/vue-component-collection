@@ -1,6 +1,5 @@
 <script setup>
 import { Icon } from 'tdesign-icons-vue-next';
-
 </script>
 
 <template lang="">
@@ -36,7 +35,7 @@ import { Icon } from 'tdesign-icons-vue-next';
     gap:calc(20 / 32 * 1rem);
   }
 
-  
+
   .typed_out{
     overflow: hidden;
     font-size: calc(32 / 32 * 1rem);

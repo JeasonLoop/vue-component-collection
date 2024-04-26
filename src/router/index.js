@@ -1,14 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// import HomeView from '../views/HomeView.vue'
+import GridWheel from '../components/GridWheel/index.jsx'
+import Home from '../pages/Home/Index.jsx'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // {
-    //   path: '/',
-    //   name: 'home',
-    //   component: HomeView
-    // },
+    {
+      path: '/grid_wheel',
+      name: 'grid_wheel',
+      component: GridWheel
+    },
   ]
 })
 

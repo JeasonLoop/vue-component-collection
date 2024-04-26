@@ -7,17 +7,14 @@ const tabList = [
   {
     key: 'home',
     title: '首页',
-    to: '/home'
   },
   {
     key: 'components',
     title: '组件列表',
-    to: '/components'
   },
   {
     key: 'mine',
     title: '我的',
-    to: '/mine'
   }
 ]
 
@@ -30,6 +27,7 @@ const index = defineComponent({
     // 修改tab
     const handleTabChange = (value) => { state.currentTab = value }
 
+    // tabbar渲染
     const renderTabBar = () => {
       return (
         <TabBar theme='tag' value={state.currentTab} onChange={handleTabChange}>
