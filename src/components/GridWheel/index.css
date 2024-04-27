@@ -9,17 +9,15 @@
   justify-content: center;
   align-items: center;
   width: 100px;
-  height:100px;
+  height: 100px;
   outline: 1px solid #333;
 }
 
-.draw_btn {
-  
-}
 
-.grid_body{
+.grid_body {
   width: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   padding-top: 100px;
@@ -27,4 +25,25 @@
 
 .active {
   border: 3px solid red
+}
+
+.config_list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  margin: calc(40 / 32 * 1rem) 0;
+  border: 1px solid #ccc;
+  border-radius: calc(12 / 32 * 1rem);
+  box-shadow: 2px 2px 5px #dfdfdf;
+}
+
+.btn_groups {
+  margin: calc(20 / 32 * 1rem) 0;
+}
+
+.tips {
+  margin: calc(25 / 32 * 1rem) 0;
+  color: #ccc;
 }
