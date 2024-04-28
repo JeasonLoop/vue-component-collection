@@ -40,10 +40,10 @@ const index = defineComponent({
 
     const renderHomePage = () => {
       return (
-        <div className="">
+        <>
           <PageContainer currentTab={state.currentTab}/>
           {renderTabBar()}
-        </div>
+        </>
       )
     }
 

@@ -14,13 +14,13 @@
 
 <template>
   <div class="page_container" @click="myLog">
-    <div class="" v-if="currentTab === 'home'">
+    <div class="page_box" v-if="currentTab === 'home'">
       <WelcomePage />
     </div>
-    <div class="" v-if="currentTab === 'components'">
+    <div class="page_box" v-if="currentTab === 'components'">
       <ComponentsList />
     </div>
-    <div class="" v-if="currentTab === 'mine'">
+    <div class="page_box" v-if="currentTab === 'mine'">
       <Mine />
     </div>
   </div>
@@ -31,5 +31,10 @@
     width: 100%;
     height: 100%;
     background-color: #fff;
+  }
+
+  .page_box {
+    width: 100%;
+    height: 100%;
   }
 </style>

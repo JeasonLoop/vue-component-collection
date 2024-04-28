@@ -8,10 +8,14 @@ const router = useRouter();
 <template>
   <!-- 路由渲染的内容 -->
   <router-view></router-view>
-  <div class="" v-if="router.currentRoute.value.path === '/'">
+  <div class="home" v-if="router.currentRoute.value.path === '/'">
     <Home />
   </div>
 </template>
 
 <style scoped>
+  .home {
+    width:100%;
+    height:100%;
+  }
 </style>
