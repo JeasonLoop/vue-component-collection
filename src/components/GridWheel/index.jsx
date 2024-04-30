@@ -1,7 +1,7 @@
 import { defineComponent, reactive, watch } from 'vue'
 import './index.css'
-import { Input, Message, Button, Cell, Popup, Picker } from 'tdesign-mobile-vue'
-
+import { Input, Button, Cell, Popup, Picker } from 'tdesign-mobile-vue'
+import { showMessage } from '../componentsConfig'
 let timer = null
 const activeIdxChangeArr = [1, 1, 2, 3, -1, -1, -2, -3] // 顺时针改变奖品下标
 const mockPrizeList = ['笔记本', '电视', '冰箱', '三轮车', '手机', '小米汽车', '水果', '1积分']
@@ -32,7 +32,7 @@ const index = defineComponent({
   setup() {
     const gridParams = reactive({
       prizeList: mockPrizeList,
-      activeIndex: 0, // 当前抽选中的奖品
+      activeIndex: -1, // 当前抽选中的奖品
       isStart: false, // 是否开始抽奖
       changeCount: 0, // 奖品下标变化用
     })
@@ -64,8 +64,9 @@ const index = defineComponent({
       }, 0);
     }
 
+    // 转动主逻辑
     watch(gridParams, () => {
-      if (gridParams.prizeList.length) {
+      if (gridParams.prizeList.length && gridParams.activeIndex >= 0) {
         // 开始抽奖
         if (timer) {
           clearInterval(timer)
@@ -99,6 +100,8 @@ const index = defineComponent({
               // 只执行一次指定奖品设置
               configParams.isInitChosen = true
             }
+
+            // 缓慢停止
             configParams.rollCount--
             configParams.rollInterval += 20
           }
@@ -108,30 +111,23 @@ const index = defineComponent({
           console.log('结束');
           clearInterval(timer)
           initGridParams()
-          showMessage('success', `恭喜您获得${gridParams.prizeList[gridParams.activeIndex]}`);
+          showMessage({
+            theme:'success',
+            content: `恭喜您获得${gridParams.prizeList[gridParams.activeIndex]}`,
+            contextDom: document.querySelector('.btn_groups')
+          });
         }
       }
 
     })
 
-    // 提示信息
-    const showMessage = (theme, content = '这是一条普通通知信息', duration = 5000) => {
-      if (Message[theme]) {
-        Message[theme]({
-          offset: [10, 16],
-          content,
-          duration,
-          icon: true,
-          zIndex: 20000,
-          context: document.querySelector('.btn_groups'),
-        });
-      }
-    };
-
     // 配置修改
     const handleConfigChange = (val, type) => {
       if(val < 0 && type !== 'chosenPrize') {
-        showMessage('warning', '请输入大于等于0的数值');
+        showMessage({
+          theme:'warning',
+          content: `请输入大于等于0的数值`,
+        });
         configParams.isValid = false
         return
       }
@@ -146,20 +142,30 @@ const index = defineComponent({
 
     // 恢复默认状态
     const handleInit = () => {
-      showMessage('success', '恢复默认状态');
+      showMessage({
+        theme:'success',
+        content: '恢复默认状态',
+      });
       Object.keys(defaultState).forEach((stateKey) => {
         configParams[stateKey] = defaultState[stateKey]
       })
       initGridParams()
+      gridParams.activeIndex = -1
     }
 
     // 配置确认
     const handleConfigConfirm = () => {
       if(!configParams.isValid){
-        showMessage('warning', '有不合法的配置项');
+        showMessage({
+          theme:'warning',
+          content: `有不合法的配置项`,
+        });
         return
       }
-      showMessage('success', '配置成功! 开始抽奖');
+      showMessage({
+        theme:'success',
+        content: `配置成功! 开始抽奖`,
+      });
       handleDraw()
     }
 
