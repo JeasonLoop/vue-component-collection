@@ -80,19 +80,21 @@ const index = defineComponent({
               let distance = 0 // 停止位置和指定位置的顺时针距离
               const chosenIdx = roundEnum[gridParams.prizeList.findIndex(item => item === configParams.chosenPrize[0])] // 找到顺时针顺序的奖品下标
               const stopIdx = roundEnum[gridParams.activeIndex]
+              console.log('指定奖品下标', chosenIdx, '停止抽奖位置下标', stopIdx);
               if (stopIdx <= chosenIdx) {
-                distance = chosenIdx - stopIdx
+                distance = chosenIdx - stopIdx + 1 // +1 (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
               } else {
-                distance = (gridParams.prizeList.length - stopIdx) + chosenIdx + 1  // (+1 防止过了下标0重复计算距离)
+                distance = (gridParams.prizeList.length - stopIdx) + chosenIdx + 1  // (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
               }
 
               // 设置转动次数 rollCount默认两圈（2 * 8）
               if (configParams.rollCount % gridParams.prizeList.length === 0) {
-                configParams.rollCount = configParams.rollCount + distance
+                configParams.rollCount = configParams.rollCount + distance 
               } else {
                 // 转动次数调整
                 configParams.rollCount = configParams.rollCount + distance + configParams.rollCount % gridParams.prizeList.length
               }
+              console.log('转动次数：', configParams.rollCount);
 
               // 只执行一次指定奖品设置
               configParams.isInitChosen = true
@@ -151,6 +153,7 @@ const index = defineComponent({
       initGridParams()
     }
 
+    // 配置确认
     const handleConfigConfirm = () => {
       if(!configParams.isValid){
         showMessage('warning', '有不合法的配置项');
@@ -172,7 +175,9 @@ const index = defineComponent({
 
     // 指定奖品变更
     const handlePickerConfirm = (val) => {
-      configParams.chosenPrize = val
+      if(val.length){
+        configParams.chosenPrize = val
+      }
       handlePickerVisible(false)
     }
 
@@ -214,8 +219,8 @@ const index = defineComponent({
       return (
         <div className="config_list">
           <div className="tips">注：转动圈数默认值2（停止抽奖后转两圈到指定位置）,切换间隔默认20ms,停止后间隔递增</div>
-          <Input label="转动圈数" type='number' placeholder="请输入转动圈数" onChange={(val) => handleConfigChange(val, 'rollCount')} />
-          <Input label="切换间隔" type='number' placeholder="请输入切换间隔" onChange={(val) => handleConfigChange(val, 'rollInterval')} />
+          <Input label="转动圈数" placeholder="请输入转动圈数" onChange={(val) => handleConfigChange(val, 'rollCount')} />
+          <Input label="切换间隔" placeholder="请输入切换间隔" onChange={(val) => handleConfigChange(val, 'rollInterval')} />
           <Cell
             arrow
             title='指定奖品'
@@ -228,7 +233,6 @@ const index = defineComponent({
               theme='primary'
               variant="outline"
               onClick={handleConfigConfirm}
-              type='number'
               style={{ marginRight: 'calc(35 / 32 * 1rem)' }}
             >
               配置确认
@@ -237,7 +241,6 @@ const index = defineComponent({
               theme='primary'
               variant="outline"
               onClick={handleInit}
-              type='number'
             >
               恢复默认状态
             </Button>
