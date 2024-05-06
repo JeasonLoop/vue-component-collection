@@ -20,7 +20,7 @@ const index = defineComponent({
       pickerShow: false,
       isInitChosen: false,
       isValid: true,
-      rollCount: 2,
+      rollCount: 16,
       rollInterval: 20
     })
     const gridWheelRef = ref(null)
@@ -37,7 +37,7 @@ const index = defineComponent({
         return
       }
       if (type === 'rollCount') {
-        const newVal = val * mockPrizeList.length
+        const newVal = val ? val * mockPrizeList.length : 0
         configParams[type] = newVal
       } else {
         configParams[type] = val
@@ -104,8 +104,8 @@ const index = defineComponent({
       return (
         <div className="config_list">
           <div className="tips">注：转动圈数默认值2（停止抽奖后转两圈到指定位置）,切换间隔默认20ms,停止后间隔递增</div>
-          <Input label="转动圈数" placeholder="请输入转动圈数" onChange={(val) => handleConfigChange(val, 'rollCount')} />
-          <Input label="切换间隔" placeholder="请输入切换间隔" onChange={(val) => handleConfigChange(val, 'rollInterval')} />
+          <Input label="转动圈数" placeholder="请输入转动圈数" onChange={(val) => handleConfigChange(Number(val), 'rollCount')} />
+          <Input label="切换间隔" placeholder="请输入切换间隔" onChange={(val) => handleConfigChange(Number(val), 'rollInterval')} />
           <Cell
             arrow
             title='指定奖品'

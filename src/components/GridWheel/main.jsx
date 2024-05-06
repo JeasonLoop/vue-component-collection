@@ -1,6 +1,5 @@
-import { defineComponent, reactive, watch } from 'vue'
+import { defineComponent, reactive, watch, toRef } from 'vue'
 import './index.css'
-import { Button } from 'tdesign-mobile-vue'
 import { showMessage } from '../componentsConfig'
 let timer = null
 const activeIdxChangeArr = [1, 1, 2, 3, -1, -1, -2, -3] // 顺时针改变奖品下标
@@ -55,29 +54,39 @@ const index = defineComponent({
     })
 
     const configParams = reactive({
-      rollCount: rollCount.value || DEFAULT_ROLL_COUNT,
-      rollInterval: rollInterval.value || DEFAULT_ROLL_INTERVAL,
+      rollCount: rollCount || DEFAULT_ROLL_COUNT,
+      rollInterval: rollInterval || DEFAULT_ROLL_INTERVAL,
       isInitChosen: false, // 是否初始化指定奖品
     })
 
     // 初始化state状态
     const initGridParams = () => {
-      configParams.rollInterval = DEFAULT_ROLL_INTERVAL
-      configParams.rollCount = DEFAULT_ROLL_COUNT
+      configParams.rollInterval = rollCount ||  DEFAULT_ROLL_INTERVAL
+      configParams.rollCount = rollInterval || DEFAULT_ROLL_COUNT
     }
 
     // 开始抽奖
     const startDraw = () => {
       if (gridParams.isStart) return
-      gridParams.activeIndex = 0
-      gridParams.changeCount = 0
+      if(rollCount) configParams.rollCount = rollCount
+      if(rollInterval) configParams.rollInterval = rollInterval
       setTimeout(() => {
-        gridParams.isStart = true
-      }, 0);
+        gridParams.activeIndex = 0
+        gridParams.changeCount = 0
+        setTimeout(() => {
+          gridParams.isStart = true
+        }, 0);
+      }, 100);
     }
 
     // 转动主逻辑
-    watch(gridParams, () => {
+    watch([gridParams,props], (newParams, oldParams) => {
+      // 配置参数更新
+      if(gridParams.isStart) {
+        if(newParams[1].rollInterval !== oldParams[1].rollInterval) configParams.rollInterval = newParams[1].rollInterval
+        if(newParams[1].rollCount !== oldParams[1].rollCount) configParams.rollCount = newParams[1].rollCount
+      }
+
       if (gridParams.prizeList.length && gridParams.activeIndex >= 0) {
         // 开始抽奖
         if (timer) {
@@ -94,7 +103,7 @@ const index = defineComponent({
               const chosenRealIdx = roundEnum[gridParams.chosenIdx] // 找到顺时针顺序的奖品下标
               const stopIdx = roundEnum[gridParams.activeIndex]
               console.log('指定奖品下标', chosenRealIdx, '停止抽奖位置下标', stopIdx);
-              if (stopIdx <= chosenRealIdx) {
+              if (stopIdx <= chosenRealIdx && stopIdx !== 0) {
                 distance = chosenRealIdx - stopIdx + 1 // +1 (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
               } else {
                 distance = (gridParams.prizeList.length - stopIdx) + chosenRealIdx + 1  // (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
@@ -130,7 +139,7 @@ const index = defineComponent({
           });
         }
       }
-    })
+    }, { deep: true })
 
     // 停止抽奖
     const drawStop = (chosenIdx) => {
