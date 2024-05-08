@@ -61,15 +61,16 @@ const index = defineComponent({
 
     // 初始化state状态
     const initGridParams = () => {
-      configParams.rollInterval = rollCount ||  DEFAULT_ROLL_INTERVAL
+      configParams.rollInterval = rollCount || DEFAULT_ROLL_INTERVAL
       configParams.rollCount = rollInterval || DEFAULT_ROLL_COUNT
+      configParams.isInitChosen = false
     }
 
     // 开始抽奖
     const startDraw = () => {
       if (gridParams.isStart) return
-      if(rollCount) configParams.rollCount = rollCount
-      if(rollInterval) configParams.rollInterval = rollInterval
+      if (rollCount) configParams.rollCount = rollCount
+      if (rollInterval) configParams.rollInterval = rollInterval
       setTimeout(() => {
         gridParams.activeIndex = 0
         gridParams.changeCount = 0
@@ -79,12 +80,38 @@ const index = defineComponent({
       }, 100);
     }
 
+    // 设置指定奖品下标
+    const setChosenPrizeIdx = () => {
+      // 找到指定的奖品下标
+      let distance = 0 // 停止位置和指定位置的顺时针距离
+      const chosenRealIdx = roundEnum[gridParams.chosenIdx] // 找到顺时针顺序的奖品下标
+      const stopIdx = roundEnum[gridParams.activeIndex]
+      console.log('指定奖品下标', chosenRealIdx, '停止抽奖位置下标', stopIdx);
+      if (stopIdx <= chosenRealIdx) {
+          distance = chosenRealIdx - stopIdx + 1 // +1 (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
+      } else {
+        distance = (gridParams.prizeList.length - stopIdx) + chosenRealIdx + 1  // (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
+      }
+
+      // 设置转动次数 rollCount默认两圈（2 * 8）
+      if (configParams.rollCount % gridParams.prizeList.length === 0) {
+        configParams.rollCount = configParams.rollCount + distance
+      } else {
+        // 转动次数调整
+        configParams.rollCount = configParams.rollCount + distance + configParams.rollCount % gridParams.prizeList.length
+      }
+      console.log('转动次数：', configParams.rollCount);
+
+      // 只执行一次指定奖品设置
+      configParams.isInitChosen = true
+    }
+
     // 转动主逻辑
-    watch([gridParams,props], (newParams, oldParams) => {
+    watch([gridParams, props], (newParams, oldParams) => {
       // 配置参数更新
-      if(gridParams.isStart) {
-        if(newParams[1].rollInterval !== oldParams[1].rollInterval) configParams.rollInterval = newParams[1].rollInterval
-        if(newParams[1].rollCount !== oldParams[1].rollCount) configParams.rollCount = newParams[1].rollCount
+      if (gridParams.isStart) {
+        if (newParams[1].rollInterval !== oldParams[1].rollInterval) configParams.rollInterval = newParams[1].rollInterval
+        if (newParams[1].rollCount !== oldParams[1].rollCount) configParams.rollCount = newParams[1].rollCount
       }
 
       if (gridParams.prizeList.length && gridParams.activeIndex >= 0) {
@@ -98,28 +125,8 @@ const index = defineComponent({
           gridParams.changeCount++
           if (!gridParams.isStart) {
             if (gridParams.chosenIdx >= 0 && !configParams.isInitChosen) {
-              // 找到指定的奖品下标
-              let distance = 0 // 停止位置和指定位置的顺时针距离
-              const chosenRealIdx = roundEnum[gridParams.chosenIdx] // 找到顺时针顺序的奖品下标
-              const stopIdx = roundEnum[gridParams.activeIndex]
-              console.log('指定奖品下标', chosenRealIdx, '停止抽奖位置下标', stopIdx);
-              if (stopIdx <= chosenRealIdx && stopIdx !== 0) {
-                distance = chosenRealIdx - stopIdx + 1 // +1 (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
-              } else {
-                distance = (gridParams.prizeList.length - stopIdx) + chosenRealIdx + 1  // (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
-              }
-
-              // 设置转动次数 rollCount默认两圈（2 * 8）
-              if (configParams.rollCount % gridParams.prizeList.length === 0) {
-                configParams.rollCount = configParams.rollCount + distance
-              } else {
-                // 转动次数调整
-                configParams.rollCount = configParams.rollCount + distance + configParams.rollCount % gridParams.prizeList.length
-              }
-              console.log('转动次数：', configParams.rollCount);
-
-              // 只执行一次指定奖品设置
-              configParams.isInitChosen = true
+              console.log("1", gridParams.activeIndex)
+              setChosenPrizeIdx() // 设置指定奖品下标
             }
 
             // 缓慢停止
@@ -141,12 +148,16 @@ const index = defineComponent({
       }
     }, { deep: true })
 
+
+
     // 停止抽奖
     const drawStop = (chosenIdx) => {
       if (chosenIdx >= 0 && chosenIdx < 8) {
         gridParams.chosenIdx = chosenIdx
       }
-      gridParams.isStart = false
+      setTimeout(() => {
+        gridParams.isStart = false
+      }, 0);
     }
 
     // 抽奖开始与停止函数暴露

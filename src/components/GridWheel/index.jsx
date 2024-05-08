@@ -48,7 +48,7 @@ const index = defineComponent({
     // 停止抽奖
     const handleStop = () => {
       const idx = mockPrizeList.findIndex((item) => item === configParams.chosenPrize[0])
-      gridWheelRef._value.drawStop(idx)
+      gridWheelRef._value.drawStop(idx) // 指定下标
     }
 
     // 恢复默认状态
@@ -152,7 +152,7 @@ const index = defineComponent({
         <GridWheel
           ref='gridWheelRef'
           prizeList={mockPrizeList}
-          chosenPrize={this.configParams.chosenPrize}
+          // chosenPrize={this.configParams.chosenPrize}
           rollCount={this.configParams.rollCount}
           rollInterval={this.configParams.rollInterval}
         />
