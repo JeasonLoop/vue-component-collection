@@ -1,4 +1,5 @@
 import girdIcon from './assets/grid_icon.png'
+import bulletIcon from './assets/bullet_icon.png'
 import { Message } from 'tdesign-mobile-vue'
 
 const componentsRoutesReflect = [
@@ -7,6 +8,12 @@ const componentsRoutesReflect = [
     eleKey:'GRID_WHEEL',
     route:'/grid_wheel',
     icon: girdIcon
+  },
+  {
+    name: '弹幕组件',
+    eleKey:'BULLET',
+    route:'/bullet',
+    icon: bulletIcon
   },
 ]
 
