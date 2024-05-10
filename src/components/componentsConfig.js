@@ -1,4 +1,5 @@
 import girdIcon from './assets/grid_icon.png'
+import pdfIcon from './assets/pdf.png'
 import { Message } from 'tdesign-mobile-vue'
 
 const componentsRoutesReflect = [
@@ -7,6 +8,12 @@ const componentsRoutesReflect = [
     eleKey:'GRID_WHEEL',
     route:'/grid_wheel',
     icon: girdIcon
+  },
+  {
+    name: 'PDF预览组件',
+    eleKey:'PREVIEW_PDF',
+    route:'/preview_pdf',
+    icon: pdfIcon
   },
 ]
 
