@@ -36,7 +36,30 @@ const componentsRoutesReflect = [
     }
   };
 
+  const generateRandomArray = (length, maxLength) => {
+    const randomArray = [];
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+    for (let i = 0; i < length; i++) {
+      const stringLength = Math.floor(Math.random() * maxLength) + 1;
+      let randomString = '';
+      for (let j = 0; j < stringLength; j++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        randomString += characters.charAt(randomIndex);
+      }
+      randomArray.push(randomString);
+    }
+
+    return randomArray;
+  }
+
+  const getRandomNum = (min,max) => {
+    return Math.random() * ((max - min) + min);  //常用
+}
+
 export {
   componentsRoutesReflect,
-  showMessage
+  showMessage,
+  generateRandomArray,
+  getRandomNum
 }
