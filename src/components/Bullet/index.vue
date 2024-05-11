@@ -2,7 +2,7 @@
 import Bullet from './component.vue'
 import { generateRandomArray } from '../componentsConfig'
 
-const bulletList = generateRandomArray(30, 6) // 随机生成的弹幕列表
+const bulletList = generateRandomArray(50, 20) // 随机生成的弹幕列表
 
 </script>
 
