@@ -40,6 +40,7 @@ const props = defineProps([
   'speed',
   'containerWidth'
 ])
+
 const { bullets = [], trackNum = 3, speed = 200, containerWidth = 500 } = props
 
 const splitedBullets = ref([]) // 拆分后的弹幕数组
@@ -89,7 +90,19 @@ const setBulletItemMargin = () => {
   })
 }
 
-handleBulletSplit({})
+/**
+ * @description 添加弹幕
+ * @param {Object} bullet 弹幕对象
+ * @param {Number} trackOrder  - 添加的轨道序号(从1开始)
+ * @param {String} content  - 弹幕内容
+ */
+const handleAddBullet = ( bullet ) => {
+  const { trackOrder, content } = bullet
+  if(!bullet || !trackOrder || !content) return
+  splitedBullets.value[trackOrder - 1].push(content)
+}
+
+defineExpose({ handleAddBullet })
 
 onMounted(() => {
   setAnimationTime()

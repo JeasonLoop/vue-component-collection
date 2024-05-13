@@ -19,9 +19,9 @@ const componentsRoutesReflect = [
 
   // 提示信息
   const showMessage = ({
-    theme,
+    theme = 'success',
     content = '这是一条普通通知信息',
-    duration = 5000,
+    duration = 1200,
     contextDom
   }) => {
     if (Message[theme]) {
