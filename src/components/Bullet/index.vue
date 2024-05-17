@@ -13,7 +13,7 @@ const handleChangeBullet = (val) => {
   bulletInput.value = val
 }
 
-const speedOptions = 
+const speedOptions =
   [
     { label: '默认', value: 200 },
     { label: '慢', value: 100 },
@@ -60,10 +60,10 @@ const handleAddBullet = () => {
     />
   </div>
   <div class='config_container'>
-      <t-input 
-        label="弹幕内容" 
-        :value='bulletInput' 
-        placeholder="请输入弹幕内容" 
+      <t-input
+        label="弹幕内容"
+        :value='bulletInput'
+        placeholder="请输入弹幕内容"
         :onChange='handleChangeBullet'
       >
       <template #suffix>
