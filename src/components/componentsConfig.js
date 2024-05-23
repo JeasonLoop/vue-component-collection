@@ -1,5 +1,6 @@
 import girdIcon from './assets/grid_icon.png'
 import bulletIcon from './assets/bullet_icon.png'
+import slotIcon from './assets/slot_icon.png'
 import { Message } from 'tdesign-mobile-vue'
 
 const componentsRoutesReflect = [
@@ -14,6 +15,12 @@ const componentsRoutesReflect = [
     eleKey:'BULLET',
     route:'/bullet',
     icon: bulletIcon
+  },
+  {
+    name: '老虎机组件',
+    eleKey:'SLOT_MACHINE',
+    route:'/slot_machine',
+    icon: slotIcon
   },
 ]
 
