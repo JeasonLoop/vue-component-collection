@@ -24,7 +24,15 @@ const isRandom = ref(false); // 是否打乱数组顺序
 const slotRef = ref(null)
 
 const startRoll = () => {
-  slotRef.value.startRoll()
+  slotRef.value.roll()
+}
+
+const stop = (name) => {
+  slotRef.value.stop(name)
+}
+
+const changeRandom = () => {
+  isRandom.value = !isRandom.value
 }
 
 </script>
@@ -38,8 +46,8 @@ const startRoll = () => {
     />
 
     <button class="btn" @click='startRoll'>开始抽奖</button>
-    <button  class="btn">停止抽奖</button>
-    <button  class="btn">
+    <button class="btn" @click='stop(`某种小动物3`)'  >停止抽奖</button>
+    <button class="btn" @click='changeRandom' >
     {{ isRandom ? '不随机初始数组' : '随机初始数组' }}
   </button>
   </div>
