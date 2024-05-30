@@ -190,11 +190,12 @@ onMounted(() => {
 });
 
 watch(
-  () => isRolling.value,
-  (newVal) => {
-    if (!newVal) return;
-    if (timeCount.value >= 5) {
+  () => [isRolling.value, timeCount.value],
+  ([newRolling, newTime]) => {
+    if (!newRolling) return;
+    if (newTime >= 5) { // 超时检测
       stop('谢谢参与');
+      return;
     }
     overTimer = setTimeout(() => {
       timeCount.value += 1;
