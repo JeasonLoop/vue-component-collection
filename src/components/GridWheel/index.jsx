@@ -2,7 +2,7 @@ import { defineComponent, reactive, ref } from 'vue'
 import './index.css'
 import { Input, Button, Cell, Popup, Picker } from 'tdesign-mobile-vue'
 import GridWheel from './component'
-import { showMessage } from '../componentsConfig'
+import { showMessage } from '../utils'
 
 const mockPrizeList = ['笔记本', '电视', '冰箱', '三轮车', '手机', '小米汽车', '水果', '1积分']
 const defaultState = {

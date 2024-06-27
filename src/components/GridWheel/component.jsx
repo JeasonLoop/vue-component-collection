@@ -1,6 +1,6 @@
 import { defineComponent, reactive, watch, toRef } from 'vue'
 import './index.css'
-import { showMessage } from '../componentsConfig'
+import { showMessage } from '../utils'
 let timer = null
 const activeIdxChangeArr = [1, 1, 2, 3, -1, -1, -2, -3] // 顺时针改变奖品下标
 

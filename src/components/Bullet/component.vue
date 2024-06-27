@@ -27,7 +27,7 @@
 
 <script lang="" setup>
 import { defineProps, onBeforeMount, onMounted, reactive, ref, watch } from "vue"
-import { getRandomNum } from '../componentsConfig'
+import { getRandomNum } from '../utils'
 /**
  * @description 弹幕组件
  * @param {Array} bullets 弹幕数组

@@ -21,7 +21,7 @@
 
 <script lang="" setup>
 import { ref, reactive, onMounted, watch, onBeforeUnmount } from 'vue';
-import { showMessage } from '../componentsConfig'
+import { showMessage } from '../utils'
 import chicken from './assets/prizeImgs/小鸡.png';
 import cat from './assets/prizeImgs/小猫.png';
 import dog from './assets/prizeImgs/小狗.png';

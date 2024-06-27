@@ -1,7 +1,7 @@
 <script lang="" setup>
 import { ref, onMounted } from 'vue'
 import Bullet from './component.vue'
-import { generateRandomArray, showMessage } from '../componentsConfig'
+import { generateRandomArray, showMessage } from '../utils'
 
 const bulletList = ref(generateRandomArray(50, 20)) // 随机生成的弹幕列表
 const bulletRef = ref(null)
