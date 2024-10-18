@@ -81,7 +81,7 @@ const initItemDisplay = (itemContainer) => {
 
 // 初始滚动加载监听
 const initIntersectionOb = () => {
-  ob = new IntersectionObserver((entries) => {
+  ob = new IntersectionObserver((entries) => { 
     if (entries[0].isIntersecting) {
       console.log('交互触发');
       // 加载更多数据 调用新接口
