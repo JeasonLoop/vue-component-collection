@@ -20,12 +20,16 @@ const tabList = [
 
 const index = defineComponent({
   setup() {
+    const sessionCurTab = sessionStorage.getItem('currentTab')
     const state = reactive({
-      currentTab: 'home'
+      currentTab: sessionCurTab || 'home'
     })
 
     // 修改tab
-    const handleTabChange = (value) => { state.currentTab = value }
+    const handleTabChange = (value) => {
+      state.currentTab = value
+      sessionStorage.setItem('currentTab', value)
+     }
 
     // tabbar渲染
     const renderTabBar = () => {

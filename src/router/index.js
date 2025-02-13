@@ -3,6 +3,7 @@ import GridWheel from '../components/GridWheel/index.jsx'
 import Bullet from '../components/Bullet/index.vue'
 import SlotMachine from '../components/SlotMachine/index.vue'
 import WaterFall from '../components/WaterFall/index.vue'
+import FlappyBird from '../components/FlappyBird/index.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/waterfall',
       name: 'waterfall',
       component: WaterFall
+    },
+    {
+      path: '/flappyBird',
+      name: 'flappyBird',
+      component: FlappyBird
     },
   ]
 })
