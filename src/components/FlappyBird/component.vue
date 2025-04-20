@@ -1,5 +1,5 @@
 <template lang="">
-  <div class="gameContainer">
+  <div class="gameContainer" ref="gameWindow">
     <div class="birdWrap" ref="bird"></div>
     <div class="ground"></div>
     <div v-for="pipe in pipes" :key="pipe.id" class="pipe" :style="{
@@ -42,6 +42,7 @@
   const score = ref(0)
 
   const bird = ref(null) // 游戏bird实体
+  const gameWindow = ref(null) // 游戏窗口实体
   let velocity = 0 // 下落速度
   let gravity = 0.005  // 降低重力系数
   let position = 40 // 初始位置
@@ -309,13 +310,13 @@
   onMounted(() => {
     window.addEventListener('keydown', handleKeyPress)
 
-    if (bird.value) {
-      bird.value.addEventListener('click', (e) => {
+    if (gameWindow.value) {
+      gameWindow.value.addEventListener('click', (e) => {
         if (gameStarted.value && !gameOver.value) {
           jump()
         }
       })
-      bird.value.addEventListener('touchstart', (e) => {
+      gameWindow.value.addEventListener('touchstart', (e) => {
         e.preventDefault()
         if (gameStarted.value && !gameOver.value) {
           jump()
@@ -521,6 +522,10 @@
   .modalContent h2 {
     color: #2ecc71;
     margin-bottom: 1rem;
+  }
+
+  .modalContent p {
+    margin: 1rem 0;
   }
 
   .modalContent .finalScore {
