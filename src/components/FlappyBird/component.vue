@@ -249,7 +249,8 @@
 
 
   // 开始游戏
-  function startGame() {
+  function startGame(e) {
+
     gameStarted.value = true
     isPlaying = true
     score.value = 0
@@ -309,15 +310,8 @@
 
   onMounted(() => {
     window.addEventListener('keydown', handleKeyPress)
-
     if (gameWindow.value) {
       gameWindow.value.addEventListener('click', (e) => {
-        if (gameStarted.value && !gameOver.value) {
-          jump()
-        }
-      })
-      gameWindow.value.addEventListener('touchstart', (e) => {
-        e.preventDefault()
         if (gameStarted.value && !gameOver.value) {
           jump()
         }
