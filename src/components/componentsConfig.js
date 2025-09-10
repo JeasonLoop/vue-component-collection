@@ -1,8 +1,17 @@
+/*
+ * @Author: jeffriesvAn
+ * @Date: 2024-07-17 20:09:27
+ * @LastEditors: jeffriesvAn
+ * @LastEditTime: 2025-09-01 21:12:15
+ * @FilePath: \vue-component-collection\src\components\componentsConfig.js
+ */
 import girdIcon from './assets/grid_icon.png'
 import bulletIcon from './assets/bullet_icon.png'
 import slotIcon from './assets/slot_icon.png'
 import waterfallIcon from './assets/waterfall.png'
 import birdIcon from './assets/birdIcon.png'
+import modalIcon from './assets/modal.png'
+import ailogo from './assets/ailogo.png'
 
 const componentsRoutesReflect = [
   {
@@ -34,7 +43,19 @@ const componentsRoutesReflect = [
     eleKey: 'flappyBird',
     route: '/flappyBird',
     icon: birdIcon
-  }
+  },
+  // {
+  //   name: '弹窗组件',
+  //   eleKey: 'modal',
+  //   route: '/modal',
+  //   icon: modalIcon
+  // },
+  {
+    name: 'AI组件',
+    eleKey: 'aiChat',
+    route: '/aiChat',
+    icon: ailogo
+  },
 ]
 
 
