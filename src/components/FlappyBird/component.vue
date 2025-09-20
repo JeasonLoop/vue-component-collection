@@ -142,7 +142,7 @@
 
     // 当最后一对管道移动到特定位置时生成新管道
     const lastPipe = pipes.value[pipes.value.length - 1]
-    if (lastPipe && lastPipe.x < 70) {
+    if (lastPipe && lastPipe.x < 60) {
       generatePipe()
     }
   }
