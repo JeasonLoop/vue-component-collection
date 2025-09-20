@@ -4,7 +4,7 @@ import Bullet from '../components/Bullet/index.vue'
 import SlotMachine from '../components/SlotMachine/index.vue'
 import WaterFall from '../components/WaterFall/index.vue'
 import FlappyBird from '../components/FlappyBird/index.vue'
-// import Modal from '../components/Modal/index.vue'
+import Modal from '../components/Modal/index.vue'
 import AIChat from '../components/AIChat/index.vue'
 
 const router = createRouter({
@@ -35,11 +35,11 @@ const router = createRouter({
       name: 'flappyBird',
       component: FlappyBird
     },
-    // {
-    //   path: '/modal',
-    //   name: 'modal',
-    //   component: Modal
-    // },
+    {
+      path: '/modal',
+      name: 'modal',
+      component: Modal
+    },
     {
       path: '/aiChat',
       name: 'aiChat',

@@ -44,12 +44,12 @@ const componentsRoutesReflect = [
     route: '/flappyBird',
     icon: birdIcon
   },
-  // {
-  //   name: '弹窗组件',
-  //   eleKey: 'modal',
-  //   route: '/modal',
-  //   icon: modalIcon
-  // },
+  {
+    name: '弹窗组件',
+    eleKey: 'modal',
+    route: '/modal',
+    icon: modalIcon
+  },
   {
     name: 'AI组件',
     eleKey: 'aiChat',
