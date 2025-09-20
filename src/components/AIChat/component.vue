@@ -1,13 +1,7 @@
 <template>
   <div class="chat-app">
-    <div
-      class="sidebar-toggle"
-      @click.stop="handleToggle"
-      @touchstart="startDrag"
-      @touchmove="onDrag"
-      @touchend="endDrag"
-      :style="{ left: toggleBtnPosition.x + 'px', top: toggleBtnPosition.y + 'px' }"
-    >
+    <div class="sidebar-toggle" @click.stop="handleToggle" @touchstart="startDrag" @touchmove="onDrag"
+      @touchend="endDrag" :style="{ left: toggleBtnPosition.x + 'px', top: toggleBtnPosition.y + 'px' }">
       {{ isSidebarCollapsed ? '☰' : '✕' }}
     </div>
     <div class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
@@ -25,7 +19,7 @@
     </div>
     <div class="overlay" v-show="!isSidebarCollapsed" @click="toggleSidebar"></div>
     <div class="chat-container">
-      <div class="messages">
+      <div class="messages" id="chat-messages">
         <div v-for="(message, index) in currentMessages()" :key="index" :class="['message', message.role]">
           <div class="avatar">
             <img :src="message.role === 'user' ? userAvatar : aiAvatar" :alt="message.role">
@@ -37,18 +31,19 @@
       </div>
 
       <div class="input-area">
-        <textarea v-model="inputText" placeholder="Type your message..."
+        <textarea id="user-input" v-model="inputText" placeholder="输入你的信息..."
           @keydown.enter.prevent="sendMessage"></textarea>
-        <button @click="sendMessage">Send</button>
+        <button id="send-button">发送</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-  import { ref, reactive, computed } from 'vue'
+  import { ref, reactive, computed, onMounted, nextTick } from 'vue'
   import userAvatar from '../../assets/avatar.jpg'
   import aiAvatar from '../../assets/robot.png'
+  import axios from 'axios'
 
   const chatHistory = reactive([
     {
@@ -71,6 +66,147 @@
   const toggleBtnPosition = ref({ x: 20, y: 50 })
   const startPosition = ref({ x: 0, y: 0 })
 
+  // ai对话相关参数
+  const API_KEY = 'NtHLeNRgfHfgEdkcmpiE:MhomOCjynnmScJDHDBIX'
+
+
+  onMounted(() => {
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+
+    // 发送消息到服务器并处理流式响应
+    async function* fetchStreamResponse(message) {
+
+      const response = await fetch(`/api/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          "model": "4.0Ultra",
+          "messages": [
+            {
+              "role": "user",
+              "content": message
+            }
+          ],
+          "stream": true
+        }),
+      })
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value);
+        const lines = buffer.split('\n');
+        console.log("🚀 ~ fetchStreamResponse ~ lines:", lines)
+
+        // 处理除最后一行外的所有完整行
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          const shortLine = line.replace('data: ', '')
+          if (shortLine.trim() && shortLine !== '[DONE]') {
+            yield JSON.parse(shortLine);
+          }
+          if (shortLine === '[DONE]') {
+            yield { choices: [{ delta: { content: 'DONE' } }] }
+          }
+        }
+      }
+    }
+
+    // 添加消息到聊天界面
+    function addMessage(content, isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+      messageDiv.innerHTML = `<div class="content">${content}</div>`;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // 处理用户输入
+    async function handleUserInput() {
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      // 禁用输入和发送按钮
+      userInput.value = '';
+      userInput.disabled = true;
+      sendButton.disabled = true;
+
+      // 显示用户消息
+      currentMessages().push({
+        role: 'user',
+        content: message
+      })
+
+      try {
+        // 流式输出响应
+        let responseText = '';
+        let isAnswering = false;
+        for await (const { choices } of fetchStreamResponse(message)) {
+          console.log("🚀 ~ handleUserInput ~ choices:", choices)
+          const curResponesTxt = choices[0].delta.content
+          responseText += curResponesTxt
+
+
+          if (curResponesTxt !== 'DONE') {
+            if (!isAnswering) {
+              isAnswering = true;
+              // 创建新的消息元素
+              currentMessages().push({
+                role: 'assistant',
+                content: responseText,
+              })
+            } else {
+              // 更新正在输入的消息
+              currentMessages().pop();
+              currentMessages().push({
+                role: 'assistant',
+                content: responseText,
+                isTyping: true
+              })
+            }
+
+          } else if (curResponesTxt === 'DONE') {
+            isAnswering = false
+          }
+
+          // contentDiv.textContent = responseText;
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        contentDiv.textContent = '发生错误，请稍后重试';
+      } finally {
+        // 重新启用输入和发送按钮
+        userInput.disabled = false;
+        sendButton.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    // 初始化事件监听器
+    nextTick(() => {
+      sendButton.addEventListener('click', handleUserInput);
+      userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleUserInput();
+        }
+      });
+
+      // 初始化焦点
+      userInput.focus();
+    })
+  })
+
   const toggleSidebar = () => {
     if (!isDragging.value) {
       isSidebarCollapsed.value = !isSidebarCollapsed.value
@@ -91,8 +227,8 @@
     }
   }
 
-    // 拖拽中
-    const onDrag = (e) => {
+  // 拖拽中
+  const onDrag = (e) => {
     const deltaX = e.touches[0].clientX - startPosition.value.x
     const deltaY = e.touches[0].clientY - startPosition.value.y
 
@@ -111,9 +247,9 @@
       let newY = toggleBtnPosition.value.y + deltaY
 
       // 限制按钮在屏幕内
-      newY = Math.max(Math.min(newY,screenHeight - 80),30) // 只限制Y轴移动范围
+      newY = Math.max(Math.min(newY, screenHeight - 80), 30) // 只限制Y轴移动范围
 
-      toggleBtnPosition.value = { x: newX, y:newY }
+      toggleBtnPosition.value = { x: newX, y: newY }
       startPosition.value = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY
@@ -157,40 +293,42 @@
     }
   }
 
-  const sendMessage = () => {
-    if (!inputText.value.trim()) return
+  // const sendMessage = () => {
+  //   if (!inputText.value.trim()) return
 
-    currentMessages().push({
-      role: 'user',
-      content: inputText.value
-    })
+  //   currentMessages().push({
+  //     role: 'user',
+  //     content: inputText.value
+  //   })
 
-    inputText.value = ''
+  //   getChat(inputText.value)
 
-    // Simulate AI response with typing effect
-    setTimeout(() => {
-      const aiResponse = {
-        role: 'assistant',
-        content: '',
-        isTyping: true
-      }
-      currentMessages().push(aiResponse)
+  //   inputText.value = ''
 
-      const fullResponse = 'I received your message. This is a simulated response.'
-      let i = 0
-      const typingInterval = setInterval(() => {
-        if (i < fullResponse.length) {
-          aiResponse.content = fullResponse.substring(0, i + 1)
-          i++
-          // Force Vue to update
-          chatHistory[currentChatIndex.value].messages = [...currentMessages()]
-        } else {
-          clearInterval(typingInterval)
-          aiResponse.isTyping = false
-        }
-      }, 50)
-    }, 1000)
-  }
+  //   // Simulate AI response with typing effect
+  //   setTimeout(() => {
+  //     const aiResponse = {
+  //       role: 'assistant',
+  //       content: '',
+  //       isTyping: true
+  //     }
+  //     currentMessages().push(aiResponse)
+
+  //     const fullResponse = 'I received your message. This is a simulated response.'
+  //     let i = 0
+  //     const typingInterval = setInterval(() => {
+  //       if (i < fullResponse.length) {
+  //         aiResponse.content = fullResponse.substring(0, i + 1)
+  //         i++
+  //         // Force Vue to update
+  //         chatHistory[currentChatIndex.value].messages = [...currentMessages()]
+  //       } else {
+  //         clearInterval(typingInterval)
+  //         aiResponse.isTyping = false
+  //       }
+  //     }, 50)
+  //   }, 1000)
+  // }
 </script>
 
 <style scoped>
@@ -231,7 +369,7 @@
   }
 
   @media (max-width: 767px) {
-    .sidebar:not(.collapsed) ~ .overlay {
+    .sidebar:not(.collapsed)~.overlay {
       opacity: 1;
       pointer-events: auto;
     }
