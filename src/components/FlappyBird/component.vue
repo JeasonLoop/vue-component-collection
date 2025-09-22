@@ -43,16 +43,16 @@
 
   const bird = ref(null) // 游戏bird实体
   const gameWindow = ref(null) // 游戏窗口实体
-  let velocity = 0 // 下落速度
-  let gravity = 0.005  // 降低重力系数
+  let velocity =1 // 下落速度
+  let gravity = 0.01  // 降低重力系数
   let position = 40 // 初始位置
   let isPlaying = true
   let animationFrameId = null
 
   // 管道速度相关配置
   const pipeConfig = {
-    initialSpeed: 0.1,
-    maxSpeed: 0.3,
+    initialSpeed: 0.3,
+    maxSpeed: 1,
     speedIncreaseInterval: 8000, // 每8秒增加一次速度
     speedIncreaseAmount: 0.02, // 每次增加的速度
   }
@@ -244,7 +244,7 @@
 
   // 跳跃
   function jump() {
-    velocity = -0.3  // 调整跳跃力度
+    velocity = -0.4  // 调整跳跃力度
   }
 
 
