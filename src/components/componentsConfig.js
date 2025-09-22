@@ -12,6 +12,7 @@ import waterfallIcon from './assets/waterfall.png'
 import birdIcon from './assets/birdIcon.png'
 import modalIcon from './assets/modal.png'
 import ailogo from './assets/ailogo.png'
+import redRain from './assets/redPackage.png'
 
 const componentsRoutesReflect = [
   {
@@ -55,6 +56,12 @@ const componentsRoutesReflect = [
     eleKey: 'aiChat',
     route: '/aiChat',
     icon: ailogo
+  },
+  {
+    name: '红包雨组件',
+    eleKey: 'redRain',
+    route: '/redRain',
+    icon: redRain
   },
 ]
 

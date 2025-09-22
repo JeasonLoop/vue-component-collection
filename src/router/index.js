@@ -6,6 +6,7 @@ import WaterFall from '../components/WaterFall/index.vue'
 import FlappyBird from '../components/FlappyBird/index.vue'
 import Modal from '../components/Modal/index.vue'
 import AIChat from '../components/AIChat/index.vue'
+import RedRain from '../components/RedRain/index.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,6 +46,11 @@ const router = createRouter({
       name: 'aiChat',
       component: AIChat
     },
+    {
+      path: '/redRain',
+      name: 'redRain',
+      component: RedRain
+    }
   ]
 })
 
