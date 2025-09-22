@@ -147,54 +147,55 @@
     }
   }
 
-  // 碰撞检测
+  // 碰撞检测（改进版，使用像素级精确检测）
   function checkCollision() {
     if (!bird.value) return false
 
     const birdRect = bird.value.getBoundingClientRect()
     const containerRect = document.querySelector('.gameContainer').getBoundingClientRect()
 
-    // 将小鸟的实际位置转换为相对于容器的百分比
-    const birdSize = {
-      width: (birdRect.width / containerRect.width) * 100,
-      height: (birdRect.height / containerRect.height) * 100
+    // 小鸟的实际像素位置和尺寸
+    const birdBox = {
+      left: birdRect.left,
+      right: birdRect.right,
+      top: birdRect.top,
+      bottom: birdRect.bottom,
+      width: birdRect.width,
+      height: birdRect.height
     }
 
-    // 小鸟的碰撞箱（稍微缩小一点，使碰撞更精确）
-    const collisionBox = {
-      left: (birdRect.left / containerRect.width) * 100,
-      right: ((birdRect.left + birdRect.width) / containerRect.width) * 100,
-      top: position + birdSize.height * 0.2, // 上边界缩小20%
-      bottom: position + birdSize.height * 0.8 // 下边界缩小20%
-    }
-
-    // 检查与地面的碰撞（留一点余地）
-    if (collisionBox.bottom > 88) {
+    // 检查与地面的碰撞（使用像素值）
+    const groundTop = containerRect.bottom - (containerRect.height * 0.1) // 地面顶部位置
+    if (birdBox.bottom > groundTop) {
       return true
     }
 
-    // 检查与天花板的碰撞（留一点余地）
-    if (collisionBox.top < 2) {
+    // 检查与天花板的碰撞（使用像素值）
+    const ceilingBottom = containerRect.top + (containerRect.height * 0.02) // 天花板底部位置
+    if (birdBox.top < ceilingBottom) {
       return true
     }
 
     // 检查与管道的碰撞
     for (const pipe of pipes.value) {
-      const pipeLeft = pipe.x
-      const pipeRight = pipe.x + pipeWidth
+      // 计算管道的实际像素位置
+      const pipeLeft = containerRect.left + (pipe.x / 100) * containerRect.width
+      const pipeRight = pipeLeft + (pipeWidth / 100) * containerRect.width
 
       // 只检查与小鸟水平位置重叠的管道
-      if (collisionBox.right > pipeLeft && collisionBox.left < pipeRight) {
+      if (birdBox.right > pipeLeft && birdBox.left < pipeRight) {
         if (pipe.isTop) {
-          // 上方管道碰撞检测（给予一点余地）
-          const topPipeBottom = pipe.height
-          if (collisionBox.top < topPipeBottom - 2) {
+          // 上方管道碰撞检测
+          const pipeBottom = containerRect.top + (pipe.height / 100) * containerRect.height
+          // 小鸟顶部与管道底部碰撞（给予2像素容差）
+          if (birdBox.top < pipeBottom - 2) {
             return true
           }
         } else {
-          // 下方管道碰撞检测（给予一点余地）
-          const bottomPipeTop = 100 - pipe.height
-          if (collisionBox.bottom > bottomPipeTop + 2) {
+          // 下方管道碰撞检测
+          const pipeTop = containerRect.bottom - (pipe.height / 100) * containerRect.height
+          // 小鸟底部与管道顶部碰撞（给予2像素容差）
+          if (birdBox.bottom > pipeTop + 2) {
             return true
           }
         }
