@@ -18,8 +18,8 @@
   const modal = inject('modal')
   const openModal = () => {
     const modalInstance = modal({
-      title: '自定义',
-      content: 'sdsdsdsd',
+      title: '自定义弹窗标题',
+      content: '自定义弹窗内容',
       onConfirm: () => {
         modalInstance.close()
       }

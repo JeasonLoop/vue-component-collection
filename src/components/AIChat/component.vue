@@ -31,7 +31,7 @@
       </div>
 
       <div class="input-area">
-        <textarea id="user-input" v-model="inputText" placeholder="输入你的信息..."
+        <textarea id="user-input" placeholder="输入你的信息..."
           @keydown.enter.prevent="sendMessage"></textarea>
         <button id="send-button">发送</button>
       </div>
@@ -58,7 +58,6 @@
   ])
 
   const currentChatIndex = ref(0)
-  const inputText = ref('')
   const isSidebarCollapsed = ref(true)
   const isDragging = ref(false)
   const startX = ref(0)
@@ -151,7 +150,6 @@
         let responseText = '';
         let isAnswering = false;
         for await (const { choices } of fetchStreamResponse(message)) {
-          console.log("🚀 ~ handleUserInput ~ choices:", choices)
           const curResponesTxt = choices[0].delta.content
           responseText += curResponesTxt
 
@@ -292,43 +290,6 @@
       currentChatIndex.value = Math.max(0, currentChatIndex.value - 1)
     }
   }
-
-  // const sendMessage = () => {
-  //   if (!inputText.value.trim()) return
-
-  //   currentMessages().push({
-  //     role: 'user',
-  //     content: inputText.value
-  //   })
-
-  //   getChat(inputText.value)
-
-  //   inputText.value = ''
-
-  //   // Simulate AI response with typing effect
-  //   setTimeout(() => {
-  //     const aiResponse = {
-  //       role: 'assistant',
-  //       content: '',
-  //       isTyping: true
-  //     }
-  //     currentMessages().push(aiResponse)
-
-  //     const fullResponse = 'I received your message. This is a simulated response.'
-  //     let i = 0
-  //     const typingInterval = setInterval(() => {
-  //       if (i < fullResponse.length) {
-  //         aiResponse.content = fullResponse.substring(0, i + 1)
-  //         i++
-  //         // Force Vue to update
-  //         chatHistory[currentChatIndex.value].messages = [...currentMessages()]
-  //       } else {
-  //         clearInterval(typingInterval)
-  //         aiResponse.isTyping = false
-  //       }
-  //     }, 50)
-  //   }, 1000)
-  // }
 </script>
 
 <style scoped>
