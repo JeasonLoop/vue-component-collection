@@ -1,10 +1,10 @@
 <script setup>
   // 进度条组件
-  import { reactive, onMounted, computed } from 'vue'
+  import { reactive, onMounted, computed, ref } from 'vue'
   const { percent, type, barBgColor, barColor, percentConfig = {} } = defineProps({
     percent: { // 进度条百分比
       type: Number,
-      default: 50
+      default: 0
     },
     type: {  // 进度条类型
       type: String,
@@ -31,10 +31,16 @@
     }
   })
 
-  // 处理进度条
-  const formatPercent = computed(() => {
-    return percent > 100 ? 100 : percent < 0 ? 0 : percent
+  const formatPercent = ref(0)
+
+  onMounted(() => {
+    // 处理进度条
+    setTimeout(() => {
+      formatPercent.value = percent > 100 ? 100 : percent < 0 ? 0 : percent
+    }, 300);
   })
+
+
 
 </script>
 
@@ -62,7 +68,8 @@
   }
 
   .progress-bar {
-    transition: all 0.3s;
+    transition: width 0.5s ease;
+    /* 平滑过渡效果 */
     height: 1rem;
     border-radius: 1rem;
   }
