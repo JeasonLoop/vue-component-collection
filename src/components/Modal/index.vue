@@ -7,39 +7,65 @@
 -->
 <template lang="">
   <div class="modal-bg">
-    <!-- <Modal /> -->
-    <button class="button" @click="openModal">打开弹窗</button>
+    <div class="option-area">
+      <Modal ref="modalRef" />
+      <Input label="弹窗标题" :value="title" @change="handleChangeTitle" placeholder="请输入弹窗标题" />
+      <Input label="弹窗内容" :value="content" @change="handleChangeContent" placeholder="请输入弹窗内容" />
+      <button class="button" @click="openModal">打开弹窗</button>
+    </div>
   </div>
 </template>
 <script lang="" setup>
-  import { inject } from 'vue'
   import Modal from './component.vue'
+  import { ref } from 'vue'
+  import { Input } from 'tdesign-mobile-vue'
 
-  const modal = inject('modal')
+
+  const modalRef = ref('')
+  const title = ref('')
+  const content = ref('')
+
   const openModal = () => {
-    const modalInstance = modal({
-      title: '自定义弹窗标题',
-      content: '自定义弹窗内容',
-      onConfirm: () => {
-        modalInstance.close()
+    modalRef.value.open({
+      title: title.value,
+      content: content.value,
+      confirmCb: () => {
+        alert('确认回调')
       }
     })
+  }
+
+  const handleChangeTitle = (v) => {
+    title.value = v
+  }
+  const handleChangeContent = (v) => {
+    content.value = v
   }
 
 </script>
 <style lang="css" scoped>
   .modal-bg {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
     width: 100%;
+    height: 100vh;
+  }
+
+  .option-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
   }
 
   .button {
-    padding: 10px 20px;
+    padding: 0.8rem 2.25rem;
     border: 1px solid #000;
-    border-radius: 5px;
-    font-size: 16px;
+    border-radius: 0.4rem;
+    font-size: 1rem;
+    margin-top: 2rem;
   }
 </style>
