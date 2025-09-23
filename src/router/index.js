@@ -7,6 +7,7 @@ import FlappyBird from '../components/FlappyBird/index.vue'
 import Modal from '../components/Modal/index.vue'
 import AIChat from '../components/AIChat/index.vue'
 import RedRain from '../components/RedRain/index.vue'
+import Progress from '../components/Progress/index.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,7 +51,12 @@ const router = createRouter({
       path: '/redRain',
       name: 'redRain',
       component: RedRain
-    }
+    },
+    {
+      path: '/progress',
+      name: 'progress',
+      component: Progress
+    },
   ]
 })
 

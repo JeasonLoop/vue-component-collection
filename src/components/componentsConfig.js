@@ -13,6 +13,7 @@ import birdIcon from './assets/birdIcon.png'
 import modalIcon from './assets/modal.png'
 import ailogo from './assets/ailogo.png'
 import redRain from './assets/redPackage.png'
+import progress from './assets/progress.png'
 
 const componentsRoutesReflect = [
   {
@@ -63,6 +64,12 @@ const componentsRoutesReflect = [
     route: '/redRain',
     icon: redRain
   },
+  {
+    name: '进度条组件',
+    eleKey: 'progress',
+    route: '/progress',
+    icon: progress
+  }
 ]
 
 
