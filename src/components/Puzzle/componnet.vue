@@ -192,20 +192,25 @@ const genSlicePuzzle = () => {
     });
 };
 
+const endGame = () => {
+    clearInterval(timeClock);
+    timeDown.value = gameTime;
+    isStart.value = false;
+};
+
 const startGame = () => {
     isStart.value = true;
     nextTick(() => {
         genSlicePuzzle();
     });
     // 游戏倒计时
-    gameTimer = setInterval(() => {
+    timeClock = setInterval(() => {
         timeDown.value--;
+        if (timeDown.value <= 0) {
+            endGame();
+            showMessage({ content: '你真逊！' });
+        }
     }, 1000);
-};
-
-const endGame = () => {
-    clearInterval(timeClock);
-    isStart.value = false;
 };
 
 defineExpose({ startGame });
