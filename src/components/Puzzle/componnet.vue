@@ -127,7 +127,7 @@ const handleGridItemClick = (index) => {
         startContainer.style.boxShadow = 'none';
         swapPosition(startContainer, endContainer);
         if (isPuzzleFinish()) {
-            // clearInterval(timeClock);
+            clearInterval(timeClock);
             isFinish.value = true;
             showMessage({ content: '你真棒！' });
             isStart.value = false;
