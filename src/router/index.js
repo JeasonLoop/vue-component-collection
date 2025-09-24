@@ -8,6 +8,7 @@ import Modal from '../components/Modal/index.vue'
 import AIChat from '../components/AIChat/index.vue'
 import RedRain from '../components/RedRain/index.vue'
 import Progress from '../components/Progress/index.vue'
+import Puzzle from '../components/Puzzle/index.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,6 +57,11 @@ const router = createRouter({
       path: '/progress',
       name: 'progress',
       component: Progress
+    },
+    {
+      path: '/puzzle',
+      name: 'puzzle',
+      component: Puzzle
     },
   ]
 })

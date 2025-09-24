@@ -14,6 +14,7 @@ import modalIcon from './assets/modal.png'
 import ailogo from './assets/ailogo.png'
 import redRain from './assets/redPackage.png'
 import progress from './assets/progress.png'
+import puzzle from './assets/puzzle.png'
 
 const componentsRoutesReflect = [
   {
@@ -69,7 +70,13 @@ const componentsRoutesReflect = [
     eleKey: 'progress',
     route: '/progress',
     icon: progress
-  }
+  },
+  {
+    name: '拼图组件',
+    eleKey: 'puzzle',
+    route: '/puzzle',
+    icon: puzzle
+  },
 ]
 
 
