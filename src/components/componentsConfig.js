@@ -15,6 +15,7 @@ import ailogo from './assets/ailogo.png'
 import redRain from './assets/redPackage.png'
 import progress from './assets/progress.png'
 import puzzle from './assets/puzzle.png'
+import icon2048 from './assets/2048.png'
 
 const componentsRoutesReflect = [
   {
@@ -76,6 +77,12 @@ const componentsRoutesReflect = [
     eleKey: 'puzzle',
     route: '/puzzle',
     icon: puzzle
+  },
+  {
+    name: '2048组件',
+    eleKey: '2048',
+    route: '/2048',
+    icon: icon2048
   },
 ]
 
