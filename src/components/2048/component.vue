@@ -216,8 +216,6 @@ const hasPossibleMoves = () => {
     for (let col = 0; col < 4; col++) {
         for (let row = 0; row < 3; row++) {
             const index = row * 4 + col;
-            console.log('🚀 ~ move ~ index:', index);
-            console.log('🚀 ~ move ~ index:', index);
             if (board.value[index] === board.value[index + 4]) {
                 return true;
             }
