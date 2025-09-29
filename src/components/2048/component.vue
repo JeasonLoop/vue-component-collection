@@ -66,7 +66,7 @@ const addRandomTile = () => {
 // 移动和合并逻辑
 const move = (direction) => {
     let moved = false;
-    if (!hasPossibleMoves(direction)) return false;
+    if (!hasPossibleMoves()) return false;
 
     for (let i = 0; i < 4; i++) {
         let line = [];
@@ -185,7 +185,7 @@ const checkGameStatus = () => {
     }
 
     // 检查是否游戏结束
-    if (!hasEmptyCells() && !hasPossibleMoves('all')) {
+    if (!hasEmptyCells() && !hasPossibleMoves()) {
         gameOver.value = true;
     }
 
@@ -201,38 +201,31 @@ const hasEmptyCells = () => {
 };
 
 // 检查是否还有可能的移动
-const hasPossibleMoves = (direction) => {
+const hasPossibleMoves = () => {
     // 检查水平方向
-    const horizonD = ['left', 'right'];
-    const verticalD = ['up', 'down'];
-    if (horizonD.includes(direction) || direction === 'all') {
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 3; col++) {
-                const index = row * 4 + col;
-                const isSameBlock = board.value[index] === board.value[index + 1];
-                const nextIsEmpty = !board.value[index + 1] || !board.value[index - 1];
-                if (isSameBlock || nextIsEmpty) {
-                    return true;
-                }
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 3; col++) {
+            const index = row * 4 + col;
+            if (board.value[index] === board.value[index + 1]) {
+                return true;
             }
         }
-        return false;
-    } else if (verticalD.includes(direction) || direction === 'all') {
-        // 检查垂直方向
-        for (let col = 0; col < 4; col++) {
-            for (let row = 0; row < 3; row++) {
-                const index = row * 4 + col;
-                const isSameBlock = board.value[index] === board.value[index + 4];
-                const nextIsEmpty = !board.value[index + 4] || !board.value[index - 4];
-                if (isSameBlock || nextIsEmpty) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
-};
 
+    // 检查垂直方向
+    for (let col = 0; col < 4; col++) {
+        for (let row = 0; row < 3; row++) {
+            const index = row * 4 + col;
+            console.log('🚀 ~ move ~ index:', index);
+            console.log('🚀 ~ move ~ index:', index);
+            if (board.value[index] === board.value[index + 4]) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
 // 重新开始游戏
 const restartGame = () => {
     initGame();
