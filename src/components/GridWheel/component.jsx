@@ -7,8 +7,8 @@ const activeIdxChangeArr = [1, 1, 2, 3, -1, -1, -2, -3] // 顺时针改变奖品
 // 顺时针下标映射表
 const roundEnum = {
   0: 0,
-  1: 0,
-  2: 0,
+  1: 1,
+  2: 2,
   3: 7,
   4: 3,
   5: 6,
@@ -86,19 +86,22 @@ const index = defineComponent({
       let distance = 0 // 停止位置和指定位置的顺时针距离
       const chosenRealIdx = roundEnum[gridParams.chosenIdx] // 找到顺时针顺序的奖品下标
       const stopIdx = roundEnum[gridParams.activeIndex]
-      console.log('指定奖品下标', chosenRealIdx, '停止抽奖位置下标', stopIdx);
+      console.log('停止抽奖位置下标', stopIdx, '指定奖品下标', chosenRealIdx,);
+
+      // 计算距离
       if (stopIdx <= chosenRealIdx) {
-          distance = chosenRealIdx - stopIdx + 1 // +1 (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
+        distance = chosenRealIdx - stopIdx
       } else {
-        distance = (gridParams.prizeList.length - stopIdx) + chosenRealIdx + 1  // (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
+        distance = (gridParams.prizeList.length - stopIdx) + chosenRealIdx
       }
+      console.log("距离:", distance)
 
       // 设置转动次数 rollCount默认两圈（2 * 8）
       if (configParams.rollCount % gridParams.prizeList.length === 0) {
-        configParams.rollCount = configParams.rollCount + distance
+        configParams.rollCount = configParams.rollCount + distance + 1 //  (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
       } else {
         // 转动次数调整
-        configParams.rollCount = configParams.rollCount + distance + configParams.rollCount % gridParams.prizeList.length
+        configParams.rollCount = configParams.rollCount + distance + configParams.rollCount % gridParams.prizeList.length + 1 //  (+1 防止过了下标0重复计算距离，因为缓动停止1圈起)
       }
       console.log('转动次数：', configParams.rollCount);
 
@@ -125,7 +128,6 @@ const index = defineComponent({
           gridParams.changeCount++
           if (!gridParams.isStart) {
             if (gridParams.chosenIdx >= 0 && !configParams.isInitChosen) {
-              console.log("1", gridParams.activeIndex)
               setChosenPrizeIdx() // 设置指定奖品下标
             }
 
@@ -136,7 +138,7 @@ const index = defineComponent({
         }, configParams.rollInterval)
 
         if (configParams.rollCount === 0) {
-          console.log('结束');
+          console.log('------------ 结束 -------------');
           clearInterval(timer)
           initGridParams()
           showMessage({
