@@ -1,133 +1,139 @@
 <template lang="">
-  <div class="red-rain-wrap" v-if="isStart">
-    <div class="game-info">
-      <div class="score">分数：{{ score }}</div>
-      <div class="time">剩余时间：{{ gameTime }}秒</div>
+    <div class="red-rain-wrap" v-if="isStart">
+        <div class="game-info">
+            <div class="score">分数：{{ score }}</div>
+            <div class="time">剩余时间：{{ gameTime }}秒</div>
+        </div>
     </div>
-  </div>
 </template>
 <script setup>
-  import { ref, onUnmounted } from 'vue'
-  import redItem from './assets/redItem.png'
-  import { showMessage } from '../utils.js'
+import { ref, onUnmounted } from 'vue';
+import redItem from './assets/redItem.png';
+import { showMessage } from '../utils.js';
 
-  const score = ref(0) // 分数统计
-  const gameTime = ref(30) // 游戏倒计时30秒
-  const isStart = ref(false)
-  const slicePartCount = 5 // 将屏幕分成五份
-  const redPackets = ref([]) // 存储所有红包元素
-  let gameTimer = null
-  let redPacketTimer = null
-
-  // 红包点击事件 - 加分并移除红包
-  const handleRedPacketClick = (redPacket) => {
-    score.value++
-    if (redPacket && redPacket.parentNode) {
-      redPacket.parentNode.removeChild(redPacket)
+const { countDown } = defineProps({
+    countDown: {
+        type: Number,
+        default: 30
     }
-  }
+});
 
-  // 生成单个红包
-  const createRedPacket = () => {
-    const redContainer = document.createElement('div')
-    const redItemImg = document.createElement('img')
-    const redWrap = document.querySelector('.red-rain-wrap')
-    const innerWidth = document.body.clientWidth
-    const deltaX = innerWidth / slicePartCount
-    const randomIdx = Math.floor(Math.random() * 5)
+const score = ref(0); // 分数统计
+const gameTime = ref(countDown); // 游戏倒计时30秒
+const isStart = ref(false);
+const slicePartCount = 5; // 将屏幕分成五份
+const redPackets = ref([]); // 存储所有红包元素
+let gameTimer = null;
+let redPacketTimer = null;
+
+// 红包点击事件 - 加分并移除红包
+const handleRedPacketClick = (redPacket) => {
+    score.value++;
+    if (redPacket && redPacket.parentNode) {
+        redPacket.parentNode.removeChild(redPacket);
+    }
+};
+
+// 生成单个红包
+const createRedPacket = () => {
+    const redContainer = document.createElement('div');
+    const redItemImg = document.createElement('img');
+    const redWrap = document.querySelector('.red-rain-wrap');
+    const innerWidth = document.body.clientWidth;
+    const deltaX = innerWidth / slicePartCount;
+    const randomIdx = Math.floor(Math.random() * 5);
 
     // 设置红包图片样式
-    redItemImg.src = redItem
-    redItemImg.className = 'redItemImg'
-    redItemImg.style.width = '5rem'
-    redItemImg.style.height = '5.5rem'
-    redItemImg.style.cursor = 'pointer'
+    redItemImg.src = redItem;
+    redItemImg.className = 'redItemImg';
+    redItemImg.style.width = '5rem';
+    redItemImg.style.height = '5.5rem';
+    redItemImg.style.cursor = 'pointer';
 
     // 设置红包容器样式
-    redContainer.className = 'red-packet'
-    redContainer.style.top = '0px'
-    redContainer.style.left = deltaX * randomIdx + 20 + 'px'
-    redContainer.style.position = 'absolute'
-    redContainer.style.animation = 'fall ease 5s'
+    redContainer.className = 'red-packet';
+    redContainer.style.top = '0px';
+    redContainer.style.left = deltaX * randomIdx + 20 + 'px';
+    redContainer.style.position = 'absolute';
+    redContainer.style.animation = 'fall ease 5s';
 
-    redContainer.appendChild(redItemImg)
-    redWrap.appendChild(redContainer)
+    redContainer.appendChild(redItemImg);
+    redWrap.appendChild(redContainer);
 
     // 添加点击事件
-    redItemImg.onclick = () => handleRedPacketClick(redContainer)
+    redItemImg.onclick = () => handleRedPacketClick(redContainer);
 
     // 3秒后自动移除红包
     setTimeout(() => {
-      if (redContainer.parentNode) {
-        redContainer.parentNode.removeChild(redContainer)
-      }
-    }, 3000)
+        if (redContainer.parentNode) {
+            redContainer.parentNode.removeChild(redContainer);
+        }
+    }, 3000);
 
-    redPackets.value.push(redContainer)
-  }
+    redPackets.value.push(redContainer);
+};
 
-  // 清理所有红包
-  const cleanupRedPackets = () => {
-    redPackets.value.forEach(redPacket => {
-      if (redPacket && redPacket.parentNode) {
-        redPacket.parentNode.removeChild(redPacket)
-      }
-    })
-    redPackets.value = []
-  }
+// 清理所有红包
+const cleanupRedPackets = () => {
+    redPackets.value.forEach((redPacket) => {
+        if (redPacket && redPacket.parentNode) {
+            redPacket.parentNode.removeChild(redPacket);
+        }
+    });
+    redPackets.value = [];
+};
 
-  // 开始游戏
-  const startGame = () => {
-    isStart.value = true
-    score.value = 0
-    gameTime.value = 30
-    cleanupRedPackets()
+// 开始游戏
+const startGame = () => {
+    isStart.value = true;
+    score.value = 0;
+    gameTime.value = countDown;
+    cleanupRedPackets();
 
     // 游戏倒计时
     gameTimer = setInterval(() => {
-      gameTime.value--
-      if (gameTime.value <= 0) {
-        endGame()
-        showMessage({
-          theme: 'success',
-          content: `恭喜完成游戏，分数为：${score.value}`,
-        });
-      }
-    }, 1000)
+        gameTime.value--;
+        if (gameTime.value <= 0) {
+            endGame();
+            showMessage({
+                theme: 'success',
+                content: `恭喜完成游戏，分数为：${score.value}`
+            });
+        }
+    }, 1000);
 
     // 每500毫秒生成一个红包
-    redPacketTimer = setInterval(createRedPacket, 500)
-  }
+    redPacketTimer = setInterval(createRedPacket, 500);
+};
 
-  // 结束游戏
-  const endGame = () => {
-    clearInterval(gameTimer)
-    clearInterval(redPacketTimer)
-    cleanupRedPackets()
-    isStart.value = false
-  }
+// 结束游戏
+const endGame = () => {
+    clearInterval(gameTimer);
+    clearInterval(redPacketTimer);
+    cleanupRedPackets();
+    isStart.value = false;
+};
 
-  // 组件卸载时清理
-  onUnmounted(() => {
-    clearInterval(gameTimer)
-    clearInterval(redPacketTimer)
-    cleanupRedPackets()
-  })
+// 组件卸载时清理
+onUnmounted(() => {
+    clearInterval(gameTimer);
+    clearInterval(redPacketTimer);
+    cleanupRedPackets();
+});
 
-  defineExpose({ startGame })
-
+defineExpose({ startGame });
 </script>
 <style scoped>
-  .red-rain-wrap {
+.red-rain-wrap {
     position: absolute;
     top: 0;
     background-color: rgba(0, 0, 0, 0.5);
     width: 100%;
     height: 100%;
     overflow: hidden;
-  }
+}
 
-  .game-info {
+.game-info {
     position: absolute;
     top: 20px;
     left: 20px;
@@ -137,9 +143,9 @@
     background-color: rgba(0, 0, 0, 0.7);
     padding: 10px;
     border-radius: 8px;
-  }
+}
 
-  .score {
+.score {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -147,21 +153,21 @@
     width: 100%;
     font-size: 20px;
     white-space: nowrap;
-  }
+}
 
-  .time {
+.time {
     color: #ff6b6b;
-  }
+}
 </style>
 
 <style>
-  @keyframes fall {
+@keyframes fall {
     0% {
-      transform: translateY(-10%);
+        transform: translateY(-10%);
     }
 
     100% {
-      transform: translateY(1000%);
+        transform: translateY(1000%);
     }
-  }
+}
 </style>
