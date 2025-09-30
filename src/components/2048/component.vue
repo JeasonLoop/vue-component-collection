@@ -66,7 +66,7 @@ const addRandomTile = () => {
 // 移动和合并逻辑
 const move = (direction) => {
     let moved = false;
-    if (!hasPossibleMoves()) return false;
+    if (!hasPossibleMoves(direction)) return false;
 
     for (let i = 0; i < 4; i++) {
         let line = [];
@@ -152,7 +152,6 @@ const moveDown = () => move('down');
 // 处理键盘输入
 const handleKeyPress = (event) => {
     if (gameOver.value) return;
-
     let moved = false;
     switch (event.key) {
         case 'ArrowLeft':
@@ -178,14 +177,20 @@ const handleKeyPress = (event) => {
 };
 
 // 检查游戏状态
-const checkGameStatus = () => {
+const checkGameStatus = (direction) => {
     // 检查是否获胜
     if (board.value.includes(2048) && !gameWon.value) {
         gameWon.value = true;
     }
 
     // 检查是否游戏结束
-    if (!hasEmptyCells() && !hasPossibleMoves()) {
+    if (
+        !hasEmptyCells() &&
+        !hasPossibleMoves('left') &&
+        !hasPossibleMoves('right') &&
+        !hasPossibleMoves('up') &&
+        !hasPossibleMoves('down')
+    ) {
         gameOver.value = true;
     }
 
@@ -201,30 +206,72 @@ const hasEmptyCells = () => {
 };
 
 // 检查是否还有可能的移动
-const hasPossibleMoves = () => {
-    // 检查水平方向
-    for (let row = 0; row < 4; row++) {
-        for (let col = 0; col < 3; col++) {
-            const index = row * 4 + col;
-            if (board.value[index] === board.value[index + 1]) {
-                return true;
+const hasPossibleMoves = (direction) => {
+    // 需要判断的下标数组
+    const genGridIndexArray = (direction) => {
+        let gridIndexArray = [];
+        // 检查水平方向
+        if (['left', 'right'].includes(direction)) {
+            for (let row = 0; row < 4; row++) {
+                let singleRow = [];
+                for (let col = 0; col < 4; col++) {
+                    const index = row * 4 + col;
+                    singleRow.push(index);
+                }
+                gridIndexArray.push(singleRow);
             }
         }
-    }
 
-    // 检查垂直方向
-    for (let col = 0; col < 4; col++) {
-        for (let row = 0; row < 3; row++) {
-            const index = row * 4 + col;
-            console.log('🚀 ~ move ~ index:', index);
-            console.log('🚀 ~ move ~ index:', index);
-            if (board.value[index] === board.value[index + 4]) {
-                return true;
+        if (['up', 'down'].includes(direction)) {
+            // 检查垂直方向
+            for (let col = 0; col < 4; col++) {
+                let singleColumn = [];
+                for (let row = 0; row < 4; row++) {
+                    const index = row * 4 + col;
+                    singleColumn.push(index);
+                }
+                gridIndexArray.push(singleColumn);
             }
         }
-    }
 
-    return false;
+        return gridIndexArray;
+    };
+
+    // 检查该行是否能移动
+    const checkCanMove = (direction) => {
+        const gridArray = genGridIndexArray(direction);
+
+        return gridArray.some((rowOrColumnIdxs) => {
+            const currentLine = [...rowOrColumnIdxs].map((girdIdx) => board.value[girdIdx]);
+
+            const filterZeroArr = currentLine.filter((item) => !!item); // 滤空数组
+
+            let isBorder = false; // 边界状态
+            let isEmpty = true; // 空行或者空列
+
+            // 有相邻可合并项目
+            const isNearlyMergeItem =
+                filterZeroArr?.length <= 2 ||
+                filterZeroArr.some((item, idx) => {
+                    return item === filterZeroArr[idx + 1] && filterZeroArr?.[idx + 1];
+                });
+
+            if (filterZeroArr?.length) {
+                if (direction === 'down' || direction === 'right') {
+                    isBorder =
+                        !!currentLine[currentLine.length - 1] &&
+                        currentLine[currentLine.length - 2] &&
+                        currentLine[currentLine.length - 3];
+                }
+                if (direction === 'up' || direction === 'left') {
+                    isBorder = !!currentLine[0] && currentLine[1] && currentLine[2];
+                }
+            }
+            return isNearlyMergeItem || !isBorder;
+        });
+    };
+
+    return checkCanMove(direction);
 };
 // 重新开始游戏
 const restartGame = () => {
