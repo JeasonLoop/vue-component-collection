@@ -122,6 +122,7 @@
         color: #666;
         width: 4rem;
         padding: 0.3rem 1rem;
+        white-space: nowrap;
       }
 
       .confirm-btn {
@@ -135,6 +136,7 @@
         color: #fff;
         width: 4rem;
         padding: 0.3rem 1rem;
+        white-space: nowrap;
       }
     }
   }
