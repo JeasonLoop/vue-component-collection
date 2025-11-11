@@ -7,11 +7,11 @@
     </div>
 </template>
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, nextTick, watch } from 'vue';
 import redItem from './assets/redItem.png';
 import { showMessage } from '../utils.js';
 
-const { countDown } = defineProps({
+const props = defineProps({
     countDown: {
         type: Number,
         default: 30
@@ -19,29 +19,48 @@ const { countDown } = defineProps({
 });
 
 const score = ref(0); // 分数统计
-const gameTime = ref(countDown); // 游戏倒计时30秒
+const gameTime = ref(props.countDown || 30); // 游戏倒计时
 const isStart = ref(false);
 const slicePartCount = 5; // 将屏幕分成五份
 const redPackets = ref([]); // 存储所有红包元素
+const timeouts = ref([]); // 存储所有setTimeout的ID，用于清理
 let gameTimer = null;
 let redPacketTimer = null;
 
 // 红包点击事件 - 加分并移除红包
 const handleRedPacketClick = (redPacket) => {
     score.value++;
+    removeRedPacket(redPacket);
+};
+
+// 移除单个红包
+const removeRedPacket = (redPacket) => {
     if (redPacket && redPacket.parentNode) {
         redPacket.parentNode.removeChild(redPacket);
+        // 从数组中移除
+        const index = redPackets.value.indexOf(redPacket);
+        if (index > -1) {
+            redPackets.value.splice(index, 1);
+        }
     }
 };
 
 // 生成单个红包
 const createRedPacket = () => {
+    // 检查游戏是否还在进行
+    if (!isStart.value) return;
+
+    const redWrap = document.querySelector('.red-rain-wrap');
+    if (!redWrap) {
+        console.warn('Red rain wrap not found');
+        return;
+    }
+
     const redContainer = document.createElement('div');
     const redItemImg = document.createElement('img');
-    const redWrap = document.querySelector('.red-rain-wrap');
     const innerWidth = document.body.clientWidth;
     const deltaX = innerWidth / slicePartCount;
-    const randomIdx = Math.floor(Math.random() * 5);
+    const randomIdx = Math.floor(Math.random() * slicePartCount);
 
     // 设置红包图片样式
     redItemImg.src = redItem;
@@ -63,18 +82,24 @@ const createRedPacket = () => {
     // 添加点击事件
     redItemImg.onclick = () => handleRedPacketClick(redContainer);
 
-    // 3秒后自动移除红包
-    setTimeout(() => {
-        if (redContainer.parentNode) {
-            redContainer.parentNode.removeChild(redContainer);
-        }
-    }, 3000);
+    // 5秒后自动移除红包（匹配动画时间）
+    const timeoutId = setTimeout(() => {
+        removeRedPacket(redContainer);
+    }, 5000);
 
+    timeouts.value.push(timeoutId);
     redPackets.value.push(redContainer);
 };
 
 // 清理所有红包
 const cleanupRedPackets = () => {
+    // 清理所有setTimeout
+    timeouts.value.forEach(timeoutId => {
+        clearTimeout(timeoutId);
+    });
+    timeouts.value = [];
+
+    // 移除所有DOM元素
     redPackets.value.forEach((redPacket) => {
         if (redPacket && redPacket.parentNode) {
             redPacket.parentNode.removeChild(redPacket);
@@ -84,11 +109,19 @@ const cleanupRedPackets = () => {
 };
 
 // 开始游戏
-const startGame = () => {
+const startGame = async () => {
+    // 如果游戏已经在进行，先结束
+    if (isStart.value) {
+        endGame();
+    }
+
     isStart.value = true;
     score.value = 0;
-    gameTime.value = countDown;
+    gameTime.value = props.countDown;
     cleanupRedPackets();
+
+    // 等待DOM更新
+    await nextTick();
 
     // 游戏倒计时
     gameTimer = setInterval(() => {
@@ -114,11 +147,16 @@ const endGame = () => {
     isStart.value = false;
 };
 
+// 监听 countDown prop 变化
+watch(() => props.countDown, (newVal) => {
+    if (!isStart.value) {
+        gameTime.value = newVal;
+    }
+});
+
 // 组件卸载时清理
 onUnmounted(() => {
-    clearInterval(gameTimer);
-    clearInterval(redPacketTimer);
-    cleanupRedPackets();
+    endGame();
 });
 
 defineExpose({ startGame });

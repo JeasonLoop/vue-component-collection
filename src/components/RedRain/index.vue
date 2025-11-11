@@ -19,7 +19,7 @@
 import { ref } from 'vue';
 import RedRain from './component.vue';
 const rainRef = ref('');
-const countDown = ref(null);
+const countDown = ref(30);
 
 const changeNum = (v) => {
     countDown.value = v;

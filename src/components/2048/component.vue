@@ -1,11 +1,16 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 
 const board = ref(Array(16).fill(0));
 const score = ref(0);
 const bestScore = ref(0);
 const gameOver = ref(false);
 const gameWon = ref(false);
+
+// 动画状态跟踪
+const newTiles = ref(new Set()); // 新出现的方块索引
+const mergedTiles = ref(new Set()); // 合并的方块索引
+const isAnimating = ref(false); // 是否正在动画中
 
 // 颜色映射
 const tileColors = {
@@ -44,6 +49,9 @@ const initGame = () => {
     score.value = 0;
     gameOver.value = false;
     gameWon.value = false;
+    newTiles.value.clear();
+    mergedTiles.value.clear();
+    isAnimating.value = false;
     addRandomTile();
     addRandomTile();
 };
@@ -60,72 +68,101 @@ const addRandomTile = () => {
     if (emptyCells.length > 0) {
         const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         board.value[randomIndex] = Math.random() < 0.9 ? 2 : 4;
+        // 标记为新出现的方块
+        newTiles.value.add(randomIndex);
+        // 300ms后移除新方块标记
+        setTimeout(() => {
+            newTiles.value.delete(randomIndex);
+        }, 300);
     }
 };
 
 // 移动和合并逻辑
-const move = (direction) => {
+const move = async (direction) => {
     let moved = false;
-    if (!hasPossibleMoves(direction)) return false;
+    isAnimating.value = true;
+    mergedTiles.value.clear();
 
     for (let i = 0; i < 4; i++) {
         let line = [];
+        let lineIndices = []; // 保存原始索引
 
         // 根据方向提取行或列
         if (direction === 'left' || direction === 'right') {
             // 处理行
-            line = board.value.slice(i * 4, i * 4 + 4); // 0-4,4-8,8-12,12-16
+            for (let j = 0; j < 4; j++) {
+                const index = i * 4 + j;
+                line.push(board.value[index]);
+                lineIndices.push(index);
+            }
             if (direction === 'right') {
-                line = line.reverse(); // 16-12, 12-8, 8-4, 4-0
+                line = line.reverse();
+                lineIndices = lineIndices.reverse();
             }
         } else {
             // 处理列
             for (let j = 0; j < 4; j++) {
                 const index = j * 4 + i;
-                line.push(board.value[index]); // 获取列的数组，按照纵向从左到右,单列从上到下 获取下标
+                line.push(board.value[index]);
+                lineIndices.push(index);
             }
             if (direction === 'down') {
-                line = line.reverse(); // 获取列的数组，按照纵向从右到左,单列从下到上 获取下标
+                line = line.reverse();
+                lineIndices = lineIndices.reverse();
             }
         }
 
         // 处理行/列：移除空格并合并相同数字
         const processedLine = [];
+        const processedIndices = [];
         let prevValue = null;
+        let prevIndex = null;
 
-        for (const value of line) {
+        for (let k = 0; k < line.length; k++) {
+            const value = line[k];
+            const originalIndex = lineIndices[k];
+
             if (value !== 0) {
                 if (prevValue === null) {
                     prevValue = value;
+                    prevIndex = originalIndex;
                 } else if (prevValue === value) {
+                    // 合并
                     processedLine.push(prevValue * 2);
+                    processedIndices.push(prevIndex);
                     score.value += prevValue * 2;
+                    mergedTiles.value.add(prevIndex);
                     prevValue = null;
-                    moved = true;
+                    prevIndex = null;
                 } else {
                     processedLine.push(prevValue);
+                    processedIndices.push(prevIndex);
                     prevValue = value;
-                    moved = true;
+                    prevIndex = originalIndex;
                 }
             }
         }
 
         if (prevValue !== null) {
             processedLine.push(prevValue);
+            processedIndices.push(prevIndex);
         }
 
         // 填充剩余的空格
         while (processedLine.length < 4) {
             processedLine.push(0);
+            processedIndices.push(null);
         }
 
         // 根据方向还原处理后的行/列
         let finalLine = processedLine;
+        let finalIndices = processedIndices;
         if (direction === 'right' || direction === 'down') {
             finalLine = finalLine.reverse();
+            finalIndices = finalIndices.reverse();
         }
 
-        // 更新board
+        // 更新board并检查是否有实际变化
         for (let j = 0; j < 4; j++) {
             let index;
             if (direction === 'left' || direction === 'right') {
@@ -141,6 +178,16 @@ const move = (direction) => {
         }
     }
 
+    // 等待DOM更新后移除动画状态
+    await nextTick();
+    setTimeout(() => {
+        isAnimating.value = false;
+        // 300ms后清除合并标记
+        setTimeout(() => {
+            mergedTiles.value.clear();
+        }, 200);
+    }, 150);
+
     return moved;
 };
 
@@ -150,34 +197,37 @@ const moveUp = () => move('up');
 const moveDown = () => move('down');
 
 // 处理键盘输入
-const handleKeyPress = (event) => {
-    if (gameOver.value) return;
+const handleKeyPress = async (event) => {
+    if (gameOver.value || isAnimating.value) return;
     let moved = false;
     switch (event.key) {
         case 'ArrowLeft':
-            moved = moveLeft();
+            moved = await moveLeft();
             break;
         case 'ArrowRight':
-            moved = moveRight();
+            moved = await moveRight();
             break;
         case 'ArrowUp':
-            moved = moveUp();
+            moved = await moveUp();
             break;
         case 'ArrowDown':
-            moved = moveDown();
+            moved = await moveDown();
             break;
         default:
             return;
     }
 
     if (moved) {
-        addRandomTile();
-        checkGameStatus();
+        // 延迟添加新方块，让移动动画完成
+        setTimeout(() => {
+            addRandomTile();
+            checkGameStatus();
+        }, 150);
     }
 };
 
 // 检查游戏状态
-const checkGameStatus = (direction) => {
+const checkGameStatus = () => {
     // 检查是否获胜
     if (board.value.includes(2048) && !gameWon.value) {
         gameWon.value = true;
@@ -197,6 +247,8 @@ const checkGameStatus = (direction) => {
     // 更新最高分
     if (score.value > bestScore.value) {
         bestScore.value = score.value;
+        // 保存最高分到localStorage
+        localStorage.setItem('2048-best-score', bestScore.value.toString());
     }
 };
 
@@ -246,28 +298,22 @@ const hasPossibleMoves = (direction) => {
 
             const filterZeroArr = currentLine.filter((item) => !!item); // 滤空数组
 
-            let isBorder = false; // 边界状态
-            let isEmpty = true; // 空行或者空列
-
-            // 有相邻可合并项目
-            const isNearlyMergeItem =
-                filterZeroArr?.length <= 2 ||
-                filterZeroArr.some((item, idx) => {
-                    return item === filterZeroArr[idx + 1] && filterZeroArr?.[idx + 1];
-                });
-
-            if (filterZeroArr?.length) {
-                if (direction === 'down' || direction === 'right') {
-                    isBorder =
-                        !!currentLine[currentLine.length - 1] &&
-                        currentLine[currentLine.length - 2] &&
-                        currentLine[currentLine.length - 3];
-                }
-                if (direction === 'up' || direction === 'left') {
-                    isBorder = !!currentLine[0] && currentLine[1] && currentLine[2];
-                }
+            // 如果行/列为空，可以移动（有空格）
+            if (filterZeroArr.length === 0) {
+                return false; // 空行/列不能移动
             }
-            return isNearlyMergeItem || !isBorder;
+
+            // 如果有空格，可以移动
+            if (filterZeroArr.length < 4) {
+                return true;
+            }
+
+            // 检查是否有相邻可合并项目
+            const hasMergeablePair = filterZeroArr.some((item, idx) => {
+                return item === filterZeroArr[idx + 1] && filterZeroArr[idx + 1] !== undefined;
+            });
+
+            return hasMergeablePair;
         });
     };
 
@@ -280,6 +326,11 @@ const restartGame = () => {
 
 // 初始化游戏
 onMounted(() => {
+    // 从localStorage加载最高分
+    const savedBestScore = localStorage.getItem('2048-best-score');
+    if (savedBestScore) {
+        bestScore.value = parseInt(savedBestScore, 10);
+    }
     initGame();
     window.addEventListener('keydown', handleKeyPress);
 });
@@ -312,12 +363,17 @@ onUnmounted(() => {
                 v-for="(cell, index) in board"
                 :key="index"
                 class="cell"
+                :class="{
+                    'tile-new': newTiles.has(index),
+                    'tile-merged': mergedTiles.has(index),
+                    'tile-moving': isAnimating && cell !== 0
+                }"
                 :style="{
                     backgroundColor: tileColors[cell],
                     color: textColors[cell] || '#776e65'
                 }"
             >
-                {{ cell !== 0 ? cell : '' }}
+                <span v-if="cell !== 0" class="tile-value">{{ cell }}</span>
             </div>
         </div>
 
@@ -428,7 +484,72 @@ onUnmounted(() => {
     justify-content: center;
     font-size: 32px;
     font-weight: bold;
-    transition: all 0.1s ease;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.15s ease,
+                color 0.15s ease;
+    position: relative;
+}
+
+.tile-value {
+    display: inline-block;
+    transition: transform 0.15s ease;
+}
+
+/* 新方块出现动画 */
+.tile-new {
+    animation: tilePop 0.3s ease-out;
+}
+
+@keyframes tilePop {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* 合并动画 */
+.tile-merged {
+    animation: tileMerge 0.3s ease-out;
+    z-index: 10;
+}
+
+.tile-merged .tile-value {
+    animation: tileMergeValue 0.3s ease-out;
+}
+
+@keyframes tileMerge {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes tileMergeValue {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.3);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* 移动动画 */
+.tile-moving {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .game-over,

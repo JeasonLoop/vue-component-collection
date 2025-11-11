@@ -44,7 +44,7 @@
                     </div>
                     <div class="content">
                         <div
-                            class="text"
+                            class="text markdown-body"
                             :class="{ 'is-typing': message.isTyping }"
                             v-html="message.content"
                         ></div>
@@ -65,11 +65,22 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue';
-import markdownit from 'markdown-it';
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue';
+import MarkdownIt from 'markdown-it';
 import userAvatar from '../../assets/avatar.jpg';
 import aiAvatar from '../../assets/robot.png';
 import axios from 'axios';
+
+// 配置 markdown-it
+const md = new MarkdownIt({
+    html: true,
+    linkify: true,
+    typographer: true,
+    highlight: function (str, lang) {
+        // 简单的代码块渲染，不进行语法高亮
+        return '<pre class="hljs"><code>' + MarkdownIt.utils.escapeHtml(str) + '</code></pre>';
+    }
+});
 
 const chatHistory = reactive([
     {
@@ -173,38 +184,50 @@ onMounted(() => {
             // 流式输出响应
             let responseText = '';
             let isAnswering = false;
-            const md = markdownit();
 
             for await (const { choices } of fetchStreamResponse(message)) {
-                const curResponesTxt = choices[0].delta.content;
-                responseText += curResponesTxt;
-                if (curResponesTxt !== 'DONE') {
+                const curResponesTxt = choices[0]?.delta?.content || '';
+                if (curResponesTxt && curResponesTxt !== 'DONE') {
+                    responseText += curResponesTxt;
                     if (!isAnswering) {
                         isAnswering = true;
                         // 创建新的消息元素
                         currentMessages().push({
                             role: 'assistant',
-                            content: md.render(responseText)
-                        });
-                    } else {
-                        // 更新正在输入的消息
-                        currentMessages().pop();
-                        currentMessages().push({
-                            role: 'assistant',
                             content: md.render(responseText),
                             isTyping: true
                         });
+                    } else {
+                        // 更新正在输入的消息
+                        const lastIndex = currentMessages().length - 1;
+                        if (lastIndex >= 0 && currentMessages()[lastIndex].role === 'assistant') {
+                            currentMessages()[lastIndex] = {
+                                role: 'assistant',
+                                content: md.render(responseText),
+                                isTyping: true
+                            };
+                        }
                     }
+                    // 滚动到底部
+                    await nextTick();
+                    scrollToBottom();
                 } else if (curResponesTxt === 'DONE') {
                     isAnswering = false;
+                    // 移除typing状态
+                    const lastIndex = currentMessages().length - 1;
+                    if (lastIndex >= 0 && currentMessages()[lastIndex].role === 'assistant') {
+                        currentMessages()[lastIndex].isTyping = false;
+                    }
                 }
-
-                // contentDiv.textContent = responseText;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
             }
         } catch (error) {
             console.error('Error:', error);
-            contentDiv.textContent = '发生错误，请稍后重试';
+            currentMessages().push({
+                role: 'assistant',
+                content: '<p style="color: #dc3545;">发生错误，请稍后重试</p>'
+            });
+            await nextTick();
+            scrollToBottom();
         } finally {
             // 重新启用输入和发送按钮
             userInput.disabled = false;
@@ -213,18 +236,39 @@ onMounted(() => {
         }
     }
 
+    // 滚动到底部
+    function scrollToBottom() {
+        nextTick(() => {
+            const messagesEl = document.getElementById('chat-messages');
+            if (messagesEl) {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+        });
+    }
+
     // 初始化事件监听器
     nextTick(() => {
         sendButton.addEventListener('click', handleUserInput);
-        userInput.addEventListener('keypress', (e) => {
+        userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleUserInput();
             }
         });
 
+        // 自动调整textarea高度
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
         // 初始化焦点
         userInput.focus();
+    });
+
+    // 监听消息变化，自动滚动
+    watch(() => currentMessages().length, () => {
+        scrollToBottom();
     });
 });
 
@@ -320,6 +364,7 @@ const deleteChat = (index) => {
     display: flex;
     height: 100vh;
     position: relative;
+    background: #f5f5f5;
 }
 
 .sidebar-toggle {
@@ -327,17 +372,23 @@ const deleteChat = (index) => {
     left: 10px;
     top: 10px;
     z-index: 100;
-    background: #3b82f6;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 22px;
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
 }
 
 .overlay {
@@ -365,12 +416,13 @@ const deleteChat = (index) => {
     top: 0;
     bottom: 0;
     z-index: 101;
-    transition: transform 0.3s ease;
-    width: 250px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 280px;
     border-right: 1px solid #e5e7eb;
-    background-color: #f8f9fa;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
     display: flex;
     flex-direction: column;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar.collapsed {
@@ -390,20 +442,36 @@ const deleteChat = (index) => {
 }
 
 .sidebar-header {
-    padding: 16px;
+    padding: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #e5e7eb;
+    background: white;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
 }
 
 .sidebar-header button {
-    background-color: #3b82f6;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 4px;
-    padding: 4px 8px;
+    border-radius: 8px;
+    padding: 8px 16px;
     cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.sidebar-header button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
 }
 
 .chat-list {
@@ -412,19 +480,32 @@ const deleteChat = (index) => {
 }
 
 .chat-item {
-    padding: 12px 16px;
+    padding: 14px 20px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    margin: 2px 0;
 }
 
 .chat-item:hover {
-    background-color: #e9ecef;
+    background-color: #f3f4f6;
 }
 
 .chat-item.active {
-    background-color: #e2e6ea;
+    background-color: #ede9fe;
+    border-left-color: #667eea;
+    font-weight: 500;
+}
+
+.chat-item span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #374151;
 }
 
 .delete-btn {
@@ -445,30 +526,77 @@ const deleteChat = (index) => {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-left: 250px;
-    transition: margin-left 0.3s ease;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    margin-left: 280px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: white;
+    border-radius: 0;
     overflow: hidden;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
 }
 
 @media (max-width: 767px) {
     .chat-container {
         margin-left: 0;
     }
+
+    .sidebar {
+        width: 260px;
+    }
+
+    .messages {
+        padding: 16px;
+    }
+
+    .content {
+        max-width: 85%;
+    }
+
+    .input-area {
+        padding: 12px;
+    }
 }
 
 .messages {
     flex: 1;
-    padding: 16px;
+    padding: 24px;
     overflow-y: auto;
-    background-color: #f9fafb;
+    background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
+    scroll-behavior: smooth;
+}
+
+.messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .message {
     display: flex;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
     gap: 12px;
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .message.user {
@@ -476,10 +604,13 @@ const deleteChat = (index) => {
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 2px solid white;
 }
 
 .avatar img {
@@ -489,7 +620,8 @@ const deleteChat = (index) => {
 }
 
 .content {
-    max-width: 70%;
+    max-width: 75%;
+    min-width: 0;
 }
 
 .message.user .content {
@@ -497,11 +629,14 @@ const deleteChat = (index) => {
 }
 
 .text {
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 14px 18px;
+    border-radius: 16px;
     background-color: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     position: relative;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.6;
 }
 
 .text:after {
@@ -532,37 +667,227 @@ const deleteChat = (index) => {
 }
 
 .message.assistant .text {
-    background-color: #f0f4ff;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+    border-top-left-radius: 4px;
+}
+
+.message.user .text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-top-right-radius: 4px;
+}
+
+/* Markdown 样式 */
+.markdown-body {
+    font-size: 15px;
+    line-height: 1.7;
+    color: inherit;
+}
+
+.markdown-body :deep(p) {
+    margin: 0.75em 0;
+}
+
+.markdown-body :deep(p:first-child) {
+    margin-top: 0;
+}
+
+.markdown-body :deep(p:last-child) {
+    margin-bottom: 0;
+}
+
+.markdown-body :deep(h1),
+.markdown-body :deep(h2),
+.markdown-body :deep(h3),
+.markdown-body :deep(h4),
+.markdown-body :deep(h5),
+.markdown-body :deep(h6) {
+    margin-top: 1.2em;
+    margin-bottom: 0.8em;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.markdown-body :deep(h1) {
+    font-size: 1.8em;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 0.3em;
+}
+
+.markdown-body :deep(h2) {
+    font-size: 1.5em;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 0.3em;
+}
+
+.markdown-body :deep(h3) {
+    font-size: 1.3em;
+}
+
+.markdown-body :deep(h4) {
+    font-size: 1.1em;
+}
+
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+    margin: 0.75em 0;
+    padding-left: 2em;
+}
+
+.markdown-body :deep(li) {
+    margin: 0.3em 0;
+}
+
+.markdown-body :deep(blockquote) {
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    border-left: 4px solid #667eea;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 4px;
+}
+
+.markdown-body :deep(code) {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.message.user .markdown-body :deep(code) {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.markdown-body :deep(pre) {
+    margin: 1em 0;
+    padding: 1em;
+    border-radius: 8px;
+    overflow-x: auto;
+    background: #1e1e1e;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.markdown-body :deep(pre code) {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: 0.9em;
+}
+
+.markdown-body :deep(table) {
+    border-collapse: collapse;
+    margin: 1em 0;
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+}
+
+.markdown-body :deep(table th),
+.markdown-body :deep(table td) {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0.6em 1em;
+    text-align: left;
+}
+
+.markdown-body :deep(table th) {
+    background: rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.markdown-body :deep(a) {
+    color: #667eea;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.markdown-body :deep(a:hover) {
+    border-bottom-color: #667eea;
+}
+
+.message.user .markdown-body :deep(a) {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+.markdown-body :deep(hr) {
+    border: none;
+    border-top: 2px solid rgba(0, 0, 0, 0.1);
+    margin: 1.5em 0;
+}
+
+.markdown-body :deep(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1em 0;
+}
+
+.markdown-body :deep(strong) {
+    font-weight: 600;
+}
+
+.markdown-body :deep(em) {
+    font-style: italic;
 }
 
 .input-area {
     display: flex;
-    padding: 12px;
+    padding: 16px 24px;
     border-top: 1px solid #e5e7eb;
-    background-color: white;
+    background: white;
+    gap: 12px;
+    align-items: flex-end;
 }
 
 .input-area textarea {
     flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
     resize: none;
-    min-height: 40px;
+    min-height: 48px;
     max-height: 120px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: #f9fafb;
+}
+
+.input-area textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .input-area button {
-    margin-left: 8px;
-    padding: 0 16px;
-    background-color: #3b82f6;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 12px;
     cursor: pointer;
+    font-weight: 500;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+    height: 48px;
+    flex-shrink: 0;
 }
 
-.input-area button:hover {
-    background-color: #2563eb;
+.input-area button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.input-area button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.input-area button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 </style>
