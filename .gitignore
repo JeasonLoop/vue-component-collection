@@ -28,3 +28,8 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# 环境变量文件（保留模板，忽略本地配置）
+.env.local
+.env.*.local
+dist-test

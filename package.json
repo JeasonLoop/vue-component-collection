@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 8080",
-    "build": "vite build",
+    "dev": "vite --mode development --port 8080",
+    "build": "vite build --mode production",
+    "build:test": "vite build --mode test",
+    "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "preview:test": "vite preview --outDir dist-test",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/"
   },
