@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
 
   // 从环境变量读取配置，如果没有则使用默认值
   // GitHub Pages 和 Vercel 部署需要仓库名作为 base 路径
-  const base = env.VITE_BASE_URL || (isProduction ? '/vue-component-collection/' : '/')
+  const base = env.VITE_BASE_URL || (isProduction ? '/vue-component-collection/' : '/vue-component-collection/')
   const enableSourcemap = env.VITE_SOURCEMAP === 'true'
   const enableMinify = env.VITE_MINIFY !== 'false'
   const dropConsole = env.VITE_DROP_CONSOLE === 'true'
