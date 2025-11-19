@@ -3,17 +3,13 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "index.html"
+      "source": "/vue-component-collection/(.*)",
+      "destination": "/vue-component-collection/index.html"
     }
   ],
   "headers": [
     {
-      "source": "(css|js|images)/(.*)",
+      "source": "/vue-component-collection/(css|js|images)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
