@@ -13,20 +13,22 @@
         var base = '/vue-component-collection';
 
         // 移除 base 前缀（如果存在）
+        var relativePath = path;
         if (path.startsWith(base)) {
-          path = path.substring(base.length);
+          relativePath = path.substring(base.length);
         }
 
-        // 构建新的 URL
+        // 始终重定向到 index.html，Vue Router 会处理路由
         var newPath = base + '/index.html';
-        if (path !== '/' && path !== '/index.html') {
-          newPath += '#' + path;
-        } else if (hash) {
-          newPath += hash;
-        }
+
+        // 如果原始路径不是根路径，Vue Router 会在加载后处理
+        // 这里我们只需要确保加载 index.html
 
         if (search) {
           newPath += search;
+        }
+        if (hash) {
+          newPath += hash;
         }
 
         // 重定向
