@@ -16,6 +16,7 @@ import redRain from './assets/redPackage.png'
 import progress from './assets/progress.png'
 import puzzle from './assets/puzzle.png'
 import icon2048 from './assets/2048.png'
+import snakeIcon from './assets/snake.png'
 
 const componentsRoutesReflect = [
   {
@@ -84,9 +85,13 @@ const componentsRoutesReflect = [
     route: '/2048',
     icon: icon2048
   },
+  {
+    name: '贪吃蛇组件',
+    eleKey: 'snake',
+    route: '/snake',
+    icon: snakeIcon
+  },
 ]
-
-
 
 export {
   componentsRoutesReflect,
