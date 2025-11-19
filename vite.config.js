@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
   const isDevelopment = mode === 'development'
 
   // 从环境变量读取配置，如果没有则使用默认值
-  const base = env.VITE_BASE_URL || (isProduction ? '/vue-component-collection/' : '/')
+  const base = '/'
   const enableSourcemap = env.VITE_SOURCEMAP === 'true'
   const enableMinify = env.VITE_MINIFY !== 'false'
   const dropConsole = env.VITE_DROP_CONSOLE === 'true'
