@@ -16,6 +16,7 @@ const foods = ref([]);
 const score = ref(0);
 const bestScore = ref(0);
 const gameOver = ref(false);
+const gameStarted = ref(false);
 const isPaused = ref(false);
 const timerId = ref(null);
 let longPressTimeoutId = null;
@@ -203,11 +204,20 @@ const initGame = () => {
     }
     foods.value.push(pos);
   }
+};
+
+const startGame = () => {
+  if (gameStarted.value) return;
+  gameStarted.value = true;
+  gameOver.value = false;
+  initGame();
   startLoop(INITIAL_SPEED);
 };
 
 const restartGame = () => {
-  initGame();
+  gameStarted.value = false;
+  gameOver.value = false;
+  clearLoop();
 };
 
 const togglePause = () => {
@@ -260,9 +270,17 @@ const handleKeydown = (event) => {
     }
   } else if (key === ' ') {
     event.preventDefault();
-    togglePause();
-  } else if (key === 'Enter' && gameOver.value) {
-    restartGame();
+    if (!gameStarted.value) {
+      startGame();
+    } else {
+      togglePause();
+    }
+  } else if (key === 'Enter') {
+    if (!gameStarted.value) {
+      startGame();
+    } else if (gameOver.value) {
+      restartGame();
+    }
   }
 };
 
@@ -330,7 +348,10 @@ onMounted(() => {
     // ignore
   }
 
-  initGame();
+  // 初始化游戏但不开始，等待用户点击开始
+  snake.value = [getCenterPosition()];
+  direction.value = 'right';
+  pendingDirection.value = 'right';
   window.addEventListener('keydown', handleKeydown);
   window.addEventListener('keyup', handleKeyup);
 });
@@ -380,9 +401,22 @@ onUnmounted(() => {
           />
         </div>
 
-        <div v-if="gameOver" class="snake-status snake-status-over">
+        <div v-if="!gameStarted" class="snake-status snake-status-start">
+          <div class="snake-status-title">贪吃蛇</div>
+          <div class="snake-status-text">使用方向键控制蛇移动</div>
+          <div class="snake-status-highscore" v-if="bestScore > 0">
+            最高分: {{ bestScore }}
+          </div>
+          <button class="snake-start-button" @click="startGame">开始游戏</button>
+        </div>
+
+        <div v-else-if="gameOver" class="snake-status snake-status-over">
           <div class="snake-status-title">游戏结束</div>
-          <div class="snake-status-text">按 Enter 键或点击“再来一局”重新开始</div>
+          <div class="snake-status-text">得分: {{ score }}</div>
+          <div class="snake-status-highscore" v-if="bestScore > 0">
+            最高分: {{ bestScore }}
+          </div>
+          <button class="snake-start-button" @click="restartGame">再来一局</button>
         </div>
 
         <div v-else-if="isPaused" class="snake-status snake-status-paused">
@@ -392,7 +426,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="snake-controls">
+    <div class="snake-controls" v-if="gameStarted">
       <button class="snake-btn primary" @click="restartGame">
         再来一局
       </button>
@@ -547,6 +581,41 @@ onUnmounted(() => {
 .snake-status-text {
   font-size: 13px;
   color: #d1d5db;
+  margin-bottom: 8px;
+}
+
+.snake-status-highscore {
+  font-size: 14px;
+  color: #facc15;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.snake-start-button {
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #022c22;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.08s ease-out, box-shadow 0.16s ease-out;
+  box-shadow: 0 10px 20px rgba(34, 197, 94, 0.35);
+}
+
+.snake-start-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(34, 197, 94, 0.45);
+}
+
+.snake-start-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 8px 16px rgba(34, 197, 94, 0.3);
+}
+
+.snake-status-start {
+  background: rgba(15, 23, 42, 0.92);
 }
 
 .snake-controls {

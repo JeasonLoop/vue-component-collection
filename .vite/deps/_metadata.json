@@ -1,0 +1,31 @@
+{
+  "hash": "de2e97e5",
+  "configHash": "08af93f1",
+  "lockfileHash": "62cda308",
+  "browserHash": "6108fc29",
+  "optimized": {
+    "vue": {
+      "src": "../../node_modules/.pnpm/vue@3.4.6/node_modules/vue/dist/vue.runtime.esm-bundler.js",
+      "file": "vue.js",
+      "fileHash": "a2e088a7",
+      "needsInterop": false
+    },
+    "tdesign-mobile-vue": {
+      "src": "../../node_modules/.pnpm/tdesign-mobile-vue@1.2.0_vue@3.4.6/node_modules/tdesign-mobile-vue/es/index.js",
+      "file": "tdesign-mobile-vue.js",
+      "fileHash": "cb2e3ba3",
+      "needsInterop": false
+    },
+    "vue-router": {
+      "src": "../../node_modules/.pnpm/vue-router@4.2.5_vue@3.4.6/node_modules/vue-router/dist/vue-router.mjs",
+      "file": "vue-router.js",
+      "fileHash": "0ba3e8ed",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-6H3TDJSJ": {
+      "file": "chunk-6H3TDJSJ.js"
+    }
+  }
+}
