@@ -1,18 +1,35 @@
 <template lang="">
   <div class="gameContainer" ref="gameWindow">
-    <div class="birdWrap" ref="bird"></div>
+    <!-- 天空背景 -->
+    <div class="sky"></div>
+    <!-- 云朵装饰 -->
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
+    <div class="cloud cloud3"></div>
+
+    <div class="birdWrap" ref="bird" :style="{ transform: birdTransform }">
+      <div class="bird-body"></div>
+      <div class="bird-wing bird-wing-left"></div>
+      <div class="bird-wing bird-wing-right"></div>
+    </div>
     <div class="ground"></div>
-    <div v-for="pipe in pipes" :key="pipe.id" class="pipe" :style="{
+    <div v-for="pipe in pipes" :key="pipe.id" class="pipe" :class="{ 'pipe-top': pipe.isTop, 'pipe-bottom': !pipe.isTop }" :style="{
       left: pipe.x + '%',
       height: pipe.height + '%',
       top: pipe.isTop ? 0 : 'auto',
       bottom: !pipe.isTop ? 0 : 'auto'
-    }" />
+    }">
+      <div class="pipe-cap"></div>
+    </div>
     <!-- 分数显示移到最上层 -->
     <div v-if="gameStarted && !gameOver" class="scoreWrapper">
-      <div class="currentScore">{{ score }}</div>
+      <div class="currentScore" :class="{ 'score-popup': scoreChanged }">{{ score }}</div>
       <div class="highScoreDisplay">最高分: {{ highScore }}</div>
     </div>
+    <!-- 速度提示 -->
+    <transition name="speed-hint">
+      <div v-if="showSpeedHint" class="speedHint">速度提升！</div>
+    </transition>
     <!-- 开始游戏封面 -->
     <div v-if="!gameStarted" class="startScreen">
       <div class="startContent">
@@ -26,7 +43,8 @@
     <div v-if="gameOver" class="gameOverModal">
       <div class="modalContent">
         <h2>游戏结束</h2>
-        <p>得分：{{ score }}</p>
+        <p class="finalScore">得分：{{ score }}</p>
+        <p v-if="score === highScore && score > 0" class="newRecord">🎉 新纪录！</p>
         <button @click="restartGame">再玩一次</button>
       </div>
     </div>
@@ -34,19 +52,22 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, onBeforeUnmount } from 'vue'
+  import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 
   const gameOver = ref(false)
   const gameStarted = ref(false)
   const highScore = ref(parseInt(localStorage.getItem('flappyBirdHighScore') || '0'))
   const score = ref(0)
+  const scoreChanged = ref(false)
+  const showSpeedHint = ref(false)
 
   const bird = ref(null) // 游戏bird实体
   const gameWindow = ref(null) // 游戏窗口实体
-  let velocity =1 // 下落速度
+  let velocity = 0 // 下落速度
   let gravity = 0.01  // 降低重力系数
   let position = 40 // 初始位置
-  let isPlaying = true
+  let rotation = 0 // 小鸟旋转角度
+  let isPlaying = false
   let animationFrameId = null
 
   // 管道速度相关配置
@@ -65,6 +86,11 @@
   const pipeGap = 15 // 上下管道之间的间隙
   const pipeWidth = 5 // 管道宽度
   const passedPipes = new Set() // 用于记录已经通过的管道
+
+  // 计算小鸟的 transform 样式
+  const birdTransform = computed(() => {
+    return `translateY(-50%) rotate(${rotation}deg)`
+  })
 
 
   // 管道速度变化
@@ -90,29 +116,31 @@
 
   // 速度提升提示
   function showSpeedChangeHint() {
-    // 添加速度变化的视觉提示
-    const speedHint = document.createElement('div')
-    speedHint.className = 'speedHint'
-    speedHint.textContent = '速度提升！'
-    document.querySelector('.gameContainer').appendChild(speedHint)
-
-    // 1秒后移除提示
+    showSpeedHint.value = true
     setTimeout(() => {
-      speedHint.remove()
+      showSpeedHint.value = false
     }, 1000)
   }
 
   // 分数更新
   function updateScore() {
+    if (!bird.value || !gameWindow.value) return
+
     pipes.value.forEach(pipe => {
       if (pipe.isTop && !passedPipes.has(pipe.id)) {
         const birdRect = bird.value.getBoundingClientRect()
-        const birdLeft = (birdRect.left / window.innerWidth) * 100
+        const containerRect = gameWindow.value.getBoundingClientRect()
+        const birdLeft = ((birdRect.left - containerRect.left) / containerRect.width) * 100
 
         // 当小鸟通过管道时（管道的右边缘在小鸟的左边）
         if (pipe.x + pipeWidth < birdLeft) {
           score.value += 1
           passedPipes.add(pipe.id)
+          // 触发分数变化动画
+          scoreChanged.value = true
+          setTimeout(() => {
+            scoreChanged.value = false
+          }, 300)
         }
       }
     })
@@ -149,10 +177,10 @@
 
   // 碰撞检测（改进版，使用像素级精确检测）
   function checkCollision() {
-    if (!bird.value) return false
+    if (!bird.value || !gameWindow.value) return false
 
     const birdRect = bird.value.getBoundingClientRect()
-    const containerRect = document.querySelector('.gameContainer').getBoundingClientRect()
+    const containerRect = gameWindow.value.getBoundingClientRect()
 
     // 小鸟的实际像素位置和尺寸
     const birdBox = {
@@ -222,12 +250,11 @@
       return
     }
 
-    // 更自然的旋转过渡
-    let rotation = velocity * 3  // 降低旋转系数
+    // 更自然的旋转过渡（限制旋转角度在 -30 到 90 度之间）
+    rotation = Math.max(-30, Math.min(90, velocity * 3))
 
     if (bird.value) {
       bird.value.style.top = `${position}%`
-      bird.value.style.transform = `translateY(-50%)`
     }
 
     movePipes() // 添加管道移动逻辑
@@ -250,14 +277,16 @@
 
 
   // 开始游戏
-  function startGame(e) {
-
+  function startGame() {
     gameStarted.value = true
     isPlaying = true
     score.value = 0
+    scoreChanged.value = false
     position = 40
     velocity = 0
+    rotation = 0
     pipes.value = []
+    passedPipes.clear() // 清空已通过的管道记录
     pipeSpeed = pipeConfig.initialSpeed // 重置管道速度
     gameStartTime = Date.now() // 记录游戏开始时间
     generatePipe()
@@ -393,8 +422,28 @@
   .currentScore {
     font-size: 48px;
     font-weight: bold;
-    color: #333;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    color: #fff;
+    text-shadow:
+      2px 2px 4px rgba(0, 0, 0, 0.5),
+      0 0 10px rgba(255, 215, 0, 0.5);
+    transition: transform 0.3s ease-out;
+  }
+
+  .currentScore.score-popup {
+    animation: scorePopup 0.3s ease-out;
+  }
+
+  @keyframes scorePopup {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.3);
+      color: #ffd700;
+    }
+    100% {
+      transform: scale(1);
+    }
   }
 
   .highScoreDisplay {
@@ -409,56 +458,159 @@
     font-weight: bold;
   }
 
-  .score {
-    position: absolute;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 48px;
-    font-weight: bold;
-    color: #333;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    z-index: 100;
-  }
-
-  .modalContent .finalScore {
-    font-size: 24px;
-    color: #2ecc71;
-    margin: 10px 0;
-  }
-
-  /* 添加分数增加时的动画效果 */
-  @keyframes scorePopup {
-    0% {
-      transform: translateX(-50%) scale(1);
-    }
-
-    50% {
-      transform: translateX(-50%) scale(1.2);
-    }
-
-    100% {
-      transform: translateX(-50%) scale(1);
-    }
-  }
-
-  .score {
-    animation: scorePopup 0.3s ease-out;
-  }
 
   .pipe {
     position: absolute;
     width: 5%;
-    background: #2ecc71;
+    background: linear-gradient(to bottom, #27ae60 0%, #2ecc71 50%, #27ae60 100%);
+    border-left: 3px solid #1e8449;
+    border-right: 3px solid #1e8449;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), 0 0 5px rgba(0, 0, 0, 0.3);
     z-index: 1;
+  }
+
+  .pipe-top {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
+  .pipe-bottom {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+
+  .pipe-cap {
+    position: absolute;
+    width: 120%;
+    height: 8%;
+    left: -10%;
+    background: linear-gradient(to bottom, #1e8449 0%, #27ae60 100%);
+    border: 2px solid #145a32;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+
+  .pipe-top .pipe-cap {
+    top: 0;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
+  .pipe-bottom .pipe-cap {
+    bottom: 0;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
   }
 
   .gameContainer {
     position: relative;
     width: 100%;
     height: 100vh;
-    background: #f0f0f0;
+    background: linear-gradient(to bottom, #87ceeb 0%, #98d8ea 50%, #b0e0e6 100%);
     overflow: hidden;
+  }
+
+  .sky {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #87ceeb 0%, #98d8ea 50%, #b0e0e6 100%);
+    z-index: 0;
+  }
+
+  .cloud {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50px;
+    opacity: 0.7;
+    z-index: 0;
+    animation: float 20s infinite ease-in-out;
+  }
+
+  .cloud:before,
+  .cloud:after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50px;
+  }
+
+  .cloud1 {
+    width: 80px;
+    height: 30px;
+    top: 20%;
+    left: 10%;
+    animation-duration: 25s;
+  }
+
+  .cloud1:before {
+    width: 50px;
+    height: 50px;
+    top: -25px;
+    left: 10px;
+  }
+
+  .cloud1:after {
+    width: 60px;
+    height: 40px;
+    top: -15px;
+    right: 10px;
+  }
+
+  .cloud2 {
+    width: 100px;
+    height: 40px;
+    top: 30%;
+    right: 15%;
+    animation-duration: 30s;
+    animation-delay: -5s;
+  }
+
+  .cloud2:before {
+    width: 60px;
+    height: 60px;
+    top: -30px;
+    left: 15px;
+  }
+
+  .cloud2:after {
+    width: 70px;
+    height: 50px;
+    top: -20px;
+    right: 15px;
+  }
+
+  .cloud3 {
+    width: 70px;
+    height: 25px;
+    top: 15%;
+    right: 30%;
+    animation-duration: 35s;
+    animation-delay: -10s;
+  }
+
+  .cloud3:before {
+    width: 45px;
+    height: 45px;
+    top: -22px;
+    left: 8px;
+  }
+
+  .cloud3:after {
+    width: 55px;
+    height: 35px;
+    top: -12px;
+    right: 8px;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(20px);
+    }
   }
 
   .restartbtn {
@@ -476,20 +628,105 @@
     width: 100%;
     height: 10%;
     z-index: 5;
-    background: #333;
+    background: linear-gradient(to bottom, #8b4513 0%, #654321 50%, #3e2723 100%);
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.3);
+    border-top: 3px solid #5d4037;
+  }
+
+  .ground::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 20px,
+        rgba(0, 0, 0, 0.1) 20px,
+        rgba(0, 0, 0, 0.1) 22px
+      );
+    opacity: 0.3;
   }
 
   .birdWrap {
     position: absolute;
     left: 10%;
     will-change: transform;
-    width: 25px;
-    /* 稍微减小视觉大小 */
-    height: 25px;
-    /* 稍微减小视觉大小 */
+    width: 30px;
+    height: 30px;
+    z-index: 10;
+    transition: transform 0.1s ease-out;
+  }
+
+  .bird-body {
+    width: 100%;
+    height: 100%;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 50%, #ff6347 100%);
+    box-shadow:
+      inset -3px -3px 0 rgba(0, 0, 0, 0.2),
+      0 2px 5px rgba(0, 0, 0, 0.3);
+    position: relative;
+  }
+
+  .bird-body::before {
+    content: '';
+    position: absolute;
+    top: 30%;
+    left: 25%;
+    width: 6px;
+    height: 6px;
+    background: #000;
     border-radius: 50%;
-    background: red;
-    transition: transform 0.15s linear;
+  }
+
+  .bird-body::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 10%;
+    width: 0;
+    height: 0;
+    border-left: 8px solid #ff6347;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+
+  .bird-wing {
+    position: absolute;
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6347 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .bird-wing-left {
+    top: 20%;
+    left: -15%;
+    width: 12px;
+    height: 8px;
+    animation: wingFlap 0.3s infinite ease-in-out;
+    transform-origin: right center;
+  }
+
+  .bird-wing-right {
+    top: 20%;
+    right: -15%;
+    width: 12px;
+    height: 8px;
+    animation: wingFlap 0.3s infinite ease-in-out 0.15s;
+    transform-origin: left center;
+  }
+
+  @keyframes wingFlap {
+    0%, 100% {
+      transform: rotate(0deg) scaleY(1);
+    }
+    50% {
+      transform: rotate(-20deg) scaleY(0.8);
+    }
   }
 
   .gameOverModal {
@@ -527,6 +764,24 @@
     font-size: 2rem;
     color: #2ecc71;
     margin: 1rem 0;
+    font-weight: bold;
+  }
+
+  .modalContent .newRecord {
+    font-size: 1.2rem;
+    color: #ffd700;
+    margin: 0.5rem 0;
+    font-weight: bold;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
   }
 
   .modalContent button {
@@ -549,31 +804,44 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(46, 204, 113, 0.8);
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.95) 0%, rgba(39, 174, 96, 0.95) 100%);
     color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 20px;
-    animation: fadeInOut 1s ease-in-out;
+    padding: 15px 30px;
+    border-radius: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
   }
 
-  @keyframes fadeInOut {
+  .speed-hint-enter-active {
+    animation: speedHintFadeIn 0.5s ease-out;
+  }
+
+  .speed-hint-leave-active {
+    animation: speedHintFadeOut 0.5s ease-in;
+  }
+
+  @keyframes speedHintFadeIn {
     0% {
       opacity: 0;
-      transform: translate(-50%, -50%) scale(0.8);
+      transform: translate(-50%, -50%) scale(0.5);
     }
-
-    20% {
-      opacity: 1;
+    50% {
       transform: translate(-50%, -50%) scale(1.1);
     }
-
-    80% {
+    100% {
       opacity: 1;
       transform: translate(-50%, -50%) scale(1);
     }
+  }
 
+  @keyframes speedHintFadeOut {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
     100% {
       opacity: 0;
       transform: translate(-50%, -50%) scale(0.8);
